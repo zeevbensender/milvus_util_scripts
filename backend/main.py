@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+
 # Enable CORS for frontend calls (important for React to connect later)
 app.add_middleware(
     CORSMiddleware,
