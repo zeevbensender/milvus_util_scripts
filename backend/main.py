@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api import milvus
+
 app = FastAPI()
 
+app.include_router(milvus.router)
 
 # Enable CORS for frontend calls (important for React to connect later)
 app.add_middleware(

@@ -7,15 +7,25 @@ export default function ConnectionPanel() {
   const [port, setPort] = useState('19530');
   const [status, setStatus] = useState(null);
 
+    const getBackendUrl = () => {
+      const { protocol, hostname } = window.location;
+      return `${protocol}//${hostname}:8080`;
+    };
+
   const handleConnect = async () => {
     const targetHost = mode === 'auto' ? 'localhost' : host;
     const targetPort = mode === 'auto' ? '19530' : port;
+    const backendUrl = getBackendUrl();
+    const backendPath = `${backendUrl}/api/milvus/ping?host=${targetHost}&port=${targetPort}`
 
     try {
-      const res = await fetch(`/api/milvus/ping?host=${targetHost}&port=${targetPort}`);
+      console.log(`PING BACKEND: ${backendPath}`)
+      const res = await fetch(backendPath);
       const json = await res.json();
+      console.log(`CONNECTION SUCCEEDED: ${json.connected}`)
       setStatus(json.connected ? 'Connected' : 'Failed to connect');
     } catch (err) {
+      console.log(`FAILED TO CONNECT ${backendPath}`)
       setStatus('Error connecting');
     }
   };
