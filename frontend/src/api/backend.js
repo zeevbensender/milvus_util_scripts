@@ -3,7 +3,7 @@ const DEFAULT_BACKEND_PORT = 8080;
 // Get backend URL based on current frontend URL
 const getBackendUrl = () => {
   const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:${DEFAULT_BACKEND_PORT}`;
+  return `${protocol}//${hostname}:8080`; // backend always exposed on same host
 };
 
 export async function getHealthStatus() {

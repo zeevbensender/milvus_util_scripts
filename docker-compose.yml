@@ -1,22 +1,26 @@
 version: '3.8'
+
 services:
   backend:
+    container_name: milvus_admin_back
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
 
   frontend:
+    container_name: milvus_admin_front
     build: ./frontend
     ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_URL=http://localhost:8000
+      - "3000:80"
     depends_on:
       - backend
 
-  milvus:
-    image: milvusdb/milvus:v2.4.0
-    ports:
-      - "19530:19530"
+  # Optionally add Milvus later
+  # milvus:
+  #   image: milvusdb/milvus:v2.4.0
+  #   ports:
+  #     - "19530:19530"
