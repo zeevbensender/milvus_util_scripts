@@ -1,5 +1,6 @@
 // src/context/ConnectionContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
+import { CONFIG } from '../utils/config';
 
 const ConnectionContext = createContext();
 
@@ -13,7 +14,7 @@ export function ConnectionProvider({ children }) {
     setStatus('connecting');
     try {
       const res = await fetch(
-        `http://${window.location.hostname}:8080/api/milvus/ping?host=${targetHost}&port=${targetPort}`
+        `http://${window.location.hostname}:${CONFIG.BACKEND_PORT}/api/milvus/ping?host=${targetHost}&port=${targetPort}`
       );
       const json = await res.json();
       if (json.connected) {
@@ -21,6 +22,8 @@ export function ConnectionProvider({ children }) {
         setHost(json.host);
         setPort(json.port);
         setStatus('connected');
+
+        // Save to localStorage
         localStorage.setItem('milvus_host', json.host);
         localStorage.setItem('milvus_port', json.port);
       } else {
@@ -33,21 +36,20 @@ export function ConnectionProvider({ children }) {
     }
   };
 
-// Load from localStorage
-useEffect(() => {
-  const savedHost = localStorage.getItem('milvus_host');
-  const savedPort = localStorage.getItem('milvus_port');
-  if (savedHost && savedPort) {
-    connectToMilvus(savedHost, savedPort);
-  }
-}, []);
-
+  // On first mount, auto-connect if stored values exist
+  useEffect(() => {
+    const savedHost = localStorage.getItem('milvus_host');
+    const savedPort = localStorage.getItem('milvus_port');
+    if (savedHost && savedPort) {
+      connectToMilvus(savedHost, savedPort);
+    }
+  }, []);
 
   // Background polling
   useEffect(() => {
     if (connected && host && port) {
       const interval = setInterval(() => {
-        fetch(`http://${window.location.hostname}:8080/api/milvus/ping?host=${host}&port=${port}`)
+        fetch(`http://${window.location.hostname}:${CONFIG.BACKEND_PORT}/api/milvus/ping?host=${host}&port=${port}`)
           .then(res => res.json())
           .then(json => {
             if (!json.connected) {
@@ -59,7 +61,7 @@ useEffect(() => {
             setConnected(false);
             setStatus('error');
           });
-      }, 30000); // every 30 seconds
+      }, CONFIG.POLL_INTERVAL_MS);
 
       return () => clearInterval(interval);
     }
