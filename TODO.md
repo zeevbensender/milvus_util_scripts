@@ -9,12 +9,12 @@
 - [x] Add real Milvus connectivity check using pymilvus
 
 ## 🚧 Milestone 2: Connection UX & Config Foundation
-- [ ] Add global ConnectionContext to manage connection status
-- [ ] Add top-right connection status bar (green/red + host:port)
-- [ ] Store last successful connection (host & port) in localStorage
-- [ ] Autofill inputs from localStorage on page load
-- [ ] Attempt auto-connect from saved settings
-- [ ] Extract hardcoded values (e.g. port 8080, 19530) into `config.js`
+- [x] Add global ConnectionContext to manage connection status
+- [x] Add top-right connection status bar (green/red + host:port)
+- [x] Store last successful connection (host & port) in localStorage
+- [x] Autofill inputs from localStorage on page load
+- [x] Attempt auto-connect from saved settings
+- [x] Extract hardcoded values (e.g. port 8080, 19530) into `config.js`
 - [ ] Display connection errors clearly (invalid port, timeout, etc.)
 - [ ] Refactor layout into shell (sidebar, topbar, content area)
 - [ ] Apply minimal styling to sidebar, header, and form elements

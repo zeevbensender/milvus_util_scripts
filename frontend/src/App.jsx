@@ -1,11 +1,10 @@
 // src/App.jsx
 import { useState } from 'react';
 import ConnectionPanel from './components/ConnectionPanel';
+import StatusBar from './components/StatusBar'; // <-- ADD THIS LINE
 
 const TABS = {
   CONNECTION: 'connection',
-  // COLLECTIONS: 'collections',
-  // QUERIES: 'queries',
 };
 
 export default function App() {
@@ -29,12 +28,12 @@ export default function App() {
             <li>
               <button onClick={() => setActiveTab(TABS.CONNECTION)}>Connection</button>
             </li>
-            {/* Add more nav items here */}
           </ul>
         </nav>
       </aside>
 
-      <main style={{ flex: 1, padding: '1rem' }}>
+      <main style={{ flex: 1, padding: '1rem', position: 'relative' }}>
+        <StatusBar /> {/* <-- ADD THIS LINE */}
         {renderActivePanel()}
       </main>
     </div>
