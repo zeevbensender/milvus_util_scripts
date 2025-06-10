@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react';
+// src/context/ConnectionContext.jsx
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ConnectionContext = createContext();
 
@@ -29,6 +30,28 @@ export function ConnectionProvider({ children }) {
       setStatus('error');
     }
   };
+
+  // Background polling
+  useEffect(() => {
+    if (connected && host && port) {
+      const interval = setInterval(() => {
+        fetch(`http://${window.location.hostname}:8080/api/milvus/ping?host=${host}&port=${port}`)
+          .then(res => res.json())
+          .then(json => {
+            if (!json.connected) {
+              setConnected(false);
+              setStatus('error');
+            }
+          })
+          .catch(() => {
+            setConnected(false);
+            setStatus('error');
+          });
+      }, 30000); // every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [connected, host, port]);
 
   return (
     <ConnectionContext.Provider value={{ connected, host, port, status, connectToMilvus }}>
