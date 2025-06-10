@@ -21,6 +21,8 @@ export function ConnectionProvider({ children }) {
         setHost(json.host);
         setPort(json.port);
         setStatus('connected');
+        localStorage.setItem('milvus_host', json.host);
+        localStorage.setItem('milvus_port', json.port);
       } else {
         setConnected(false);
         setStatus('error');
@@ -30,6 +32,16 @@ export function ConnectionProvider({ children }) {
       setStatus('error');
     }
   };
+
+// Load from localStorage
+useEffect(() => {
+  const savedHost = localStorage.getItem('milvus_host');
+  const savedPort = localStorage.getItem('milvus_port');
+  if (savedHost && savedPort) {
+    connectToMilvus(savedHost, savedPort);
+  }
+}, []);
+
 
   // Background polling
   useEffect(() => {
