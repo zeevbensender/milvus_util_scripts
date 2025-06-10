@@ -1,32 +1,31 @@
 // src/components/ConnectionPanel.jsx
 import { useState } from 'react';
+import { useConnection } from '../context/ConnectionContext.jsx';
 
 export default function ConnectionPanel() {
   const [mode, setMode] = useState('auto');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('19530');
-  const [status, setStatus] = useState(null);
 
-    const getBackendUrl = () => {
-      const { protocol, hostname } = window.location;
-      return `${protocol}//${hostname}:8080`;
-    };
+  const { connectToMilvus, status, connected, host: activeHost, port: activePort } = useConnection();
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
     const targetHost = mode === 'auto' ? 'localhost' : host;
     const targetPort = mode === 'auto' ? '19530' : port;
-    const backendUrl = getBackendUrl();
-    const backendPath = `${backendUrl}/api/milvus/ping?host=${targetHost}&port=${targetPort}`
+    connectToMilvus(targetHost, targetPort);
+  };
 
-    try {
-      console.log(`PING BACKEND: ${backendPath}`)
-      const res = await fetch(backendPath);
-      const json = await res.json();
-      console.log(`CONNECTION SUCCEEDED: ${json.connected}`)
-      setStatus(json.connected ? 'Connected' : 'Failed to connect');
-    } catch (err) {
-      console.log(`FAILED TO CONNECT ${backendPath}`)
-      setStatus('Error connecting');
+  const renderStatus = () => {
+    switch (status) {
+      case 'connecting':
+        return '🔄 Connecting...';
+      case 'connected':
+        return `🟢 Connected to ${activeHost}:${activePort}`;
+      case 'error':
+        return '🔴 Failed to connect';
+      case 'idle':
+      default:
+        return null;
     }
   };
 
@@ -77,7 +76,7 @@ export default function ConnectionPanel() {
 
       {status && (
         <div style={{ marginTop: '1rem' }}>
-          <strong>Status:</strong> {status}
+          <strong>Status:</strong> {renderStatus()}
         </div>
       )}
     </div>
