@@ -196,3 +196,4 @@ vnvutil/
 .idea/
 frontend/node_modules/
 vnvmus/
+frontend/.vite/

@@ -1,0 +1,39 @@
+/* src/styles/global.css */
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+}
+
+.sidebar {
+  width: 200px;
+  background-color: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+}
+
+.sidebar h3 {
+  margin-top: 0;
+}
+
+.sidebar button {
+  background: none;
+  border: none;
+  padding: 0.5rem 0;
+  color: #007bff;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar button:hover {
+  text-decoration: underline;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  position: relative;
+}

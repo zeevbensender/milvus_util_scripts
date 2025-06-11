@@ -1,13 +1,12 @@
 // src/components/ConnectionPanel.jsx
 import { useState } from 'react';
-import { useConnection } from '../context/ConnectionContext.jsx';
+import { useConnection } from '../context/ConnectionContext';
 
 export default function ConnectionPanel() {
+  const { connectToMilvus, status, host: connectedHost, port: connectedPort } = useConnection();
   const [mode, setMode] = useState('auto');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('19530');
-
-  const { connectToMilvus, status, connected, host: activeHost, port: activePort } = useConnection();
 
   const handleConnect = () => {
     const targetHost = mode === 'auto' ? 'localhost' : host;
@@ -16,69 +15,98 @@ export default function ConnectionPanel() {
   };
 
   const renderStatus = () => {
-    switch (status) {
-      case 'connecting':
-        return '🔄 Connecting...';
-      case 'connected':
-        return `🟢 Connected to ${activeHost}:${activePort}`;
-      case 'error':
-        return '🔴 Failed to connect';
-      case 'idle':
-      default:
-        return null;
+    if (status === 'connected') {
+      return (
+        <div className="mt-3">
+          <strong>Status:</strong>{' '}
+          <span className="badge bg-success">
+            Connected to {connectedHost}:{connectedPort}
+          </span>
+        </div>
+      );
+    } else if (status === 'error') {
+      return (
+        <div className="mt-3">
+          <strong>Status:</strong>{' '}
+          <span className="badge bg-danger">Connection Error</span>
+        </div>
+      );
+    } else if (status === 'connecting') {
+      return (
+        <div className="mt-3">
+          <strong>Status:</strong>{' '}
+          <span className="badge bg-warning text-dark">Connecting...</span>
+        </div>
+      );
     }
+    return null;
   };
 
   return (
-    <div>
-      <h2>Milvus Connection</h2>
-      <div>
-        <label>
-          <input
-            type="radio"
-            name="mode"
-            value="auto"
-            checked={mode === 'auto'}
-            onChange={() => setMode('auto')}
-          />{' '}
+    <div className="container">
+      <h2 className="mb-4">Milvus Connection</h2>
+
+      <div className="form-check">
+        <input
+          type="radio"
+          id="auto"
+          name="mode"
+          value="auto"
+          checked={mode === 'auto'}
+          onChange={() => setMode('auto')}
+          className="form-check-input"
+        />
+        <label htmlFor="auto" className="form-check-label">
           Auto-connect to localhost
         </label>
-        <br />
-        <label>
-          <input
-            type="radio"
-            name="mode"
-            value="remote"
-            checked={mode === 'remote'}
-            onChange={() => setMode('remote')}
-          />{' '}
+      </div>
+
+      <div className="form-check mb-3">
+        <input
+          type="radio"
+          id="manual"
+          name="mode"
+          value="manual"
+          checked={mode === 'manual'}
+          onChange={() => setMode('manual')}
+          className="form-check-input"
+        />
+        <label htmlFor="manual" className="form-check-label">
           Connect to remote host
         </label>
       </div>
 
-      {mode === 'remote' && (
-        <div style={{ marginTop: '1rem' }}>
-          <label>
-            Host:{' '}
-            <input value={host} onChange={(e) => setHost(e.target.value)} />
-          </label>
-          <br />
-          <label>
-            Port:{' '}
-            <input value={port} onChange={(e) => setPort(e.target.value)} />
-          </label>
+      {mode === 'manual' && (
+        <div className="row g-3 mb-3">
+          <div className="col-md-6">
+            <label htmlFor="host" className="form-label">Host</label>
+            <input
+              id="host"
+              type="text"
+              className="form-control"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label htmlFor="port" className="form-label">Port</label>
+            <input
+              id="port"
+              type="text"
+              className="form-control"
+              value={port}
+              onChange={(e) => setPort(e.target.value)}
+            />
+          </div>
         </div>
       )}
 
-      <button style={{ marginTop: '1rem' }} onClick={handleConnect}>
+      <button className="btn btn-primary" onClick={handleConnect}>
         Connect
       </button>
 
-      {status && (
-        <div style={{ marginTop: '1rem' }}>
-          <strong>Status:</strong> {renderStatus()}
-        </div>
-      )}
+      {renderStatus()}
     </div>
   );
 }
