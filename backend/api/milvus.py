@@ -45,3 +45,26 @@ def ping_milvus(
             port=port,
             error=str(e)
         )
+
+@router.get("/collections")
+def list_collections():
+    # Stubbed until real Milvus logic is added
+    return {
+        "status": "success",
+        "collections": [
+            {
+                "name": "PUBMED_DISKANN_1M",
+                "description": "1 million biomedical vectors",
+                "loaded": True,
+                "entity_count": 1000000,
+                "index_type": "DISKANN"
+            },
+            {
+                "name": "GLOVE_SMALL",
+                "description": "Small GloVe test dataset",
+                "loaded": False,
+                "entity_count": 10000,
+                "index_type": "HNSW"
+            }
+        ]
+    }

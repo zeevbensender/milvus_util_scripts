@@ -16,3 +16,15 @@ export async function getHealthStatus() {
     return null;
   }
 }
+
+export async function getCollections() {
+  try {
+    const response = await fetch(`${getBackendUrl()}/api/milvus/collections`);
+    if (!response.ok) throw new Error("Failed to fetch collections");
+    const json = await response.json();
+    return json;
+  } catch (err) {
+    console.error("Error fetching collections:", err);
+    return { status: 'error', collections: [] };
+  }
+}

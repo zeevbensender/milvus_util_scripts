@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import ConnectionPanel from './components/ConnectionPanel';
 import StatusBar from './components/StatusBar'; // <-- ADD THIS LINE
+import CollectionsPanel from './components/CollectionsPanel';
 
 const TABS = {
   CONNECTION: 'connection',
+  COLLECTIONS: 'collections'
 };
 
 export default function App() {
@@ -14,6 +16,8 @@ export default function App() {
     switch (activeTab) {
       case TABS.CONNECTION:
         return <ConnectionPanel />;
+      case TABS.COLLECTIONS:
+        return <CollectionsPanel />;
       default:
         return <div>Select a panel from the sidebar</div>;
     }
@@ -27,6 +31,9 @@ export default function App() {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li>
               <button onClick={() => setActiveTab(TABS.CONNECTION)}>Connection</button>
+            </li>
+            <li>
+              <button onClick={() => setActiveTab(TABS.COLLECTIONS)}>Collections</button>
             </li>
           </ul>
         </nav>
