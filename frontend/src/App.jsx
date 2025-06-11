@@ -1,12 +1,11 @@
-// src/App.jsx
 import { useState } from 'react';
 import ConnectionPanel from './components/ConnectionPanel';
-import StatusBar from './components/StatusBar'; // <-- ADD THIS LINE
 import CollectionsPanel from './components/CollectionsPanel';
+import StatusBar from './components/StatusBar';
 
 const TABS = {
   CONNECTION: 'connection',
-  COLLECTIONS: 'collections'
+  COLLECTIONS: 'collections',
 };
 
 export default function App() {
@@ -19,30 +18,42 @@ export default function App() {
       case TABS.COLLECTIONS:
         return <CollectionsPanel />;
       default:
-        return <div>Select a panel from the sidebar</div>;
+        return <div className="p-3">Select a panel from the sidebar</div>;
     }
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <aside style={{ width: '200px', borderRight: '1px solid #ccc', padding: '1rem' }}>
-        <h3>Milvus Admin</h3>
-        <nav>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li>
-              <button onClick={() => setActiveTab(TABS.CONNECTION)}>Connection</button>
+    <div className="container-fluid">
+      <div className="row vh-100">
+        {/* Sidebar */}
+        <aside className="col-2 bg-light border-end p-3">
+          <h5 className="text-primary">Milvus Admin</h5>
+          <ul className="nav flex-column">
+            <li className="nav-item">
+              <button
+                className={`nav-link btn btn-link ${activeTab === TABS.CONNECTION ? 'fw-bold' : ''}`}
+                onClick={() => setActiveTab(TABS.CONNECTION)}
+              >
+                Connection
+              </button>
             </li>
-            <li>
-              <button onClick={() => setActiveTab(TABS.COLLECTIONS)}>Collections</button>
+            <li className="nav-item">
+              <button
+                className={`nav-link btn btn-link ${activeTab === TABS.COLLECTIONS ? 'fw-bold' : ''}`}
+                onClick={() => setActiveTab(TABS.COLLECTIONS)}
+              >
+                Collections
+              </button>
             </li>
           </ul>
-        </nav>
-      </aside>
+        </aside>
 
-      <main style={{ flex: 1, padding: '1rem', position: 'relative' }}>
-        <StatusBar /> {/* <-- ADD THIS LINE */}
-        {renderActivePanel()}
-      </main>
+        {/* Main Content */}
+        <main className="col-10 p-3 position-relative">
+          <StatusBar />
+          {renderActivePanel()}
+        </main>
+      </div>
     </div>
   );
 }

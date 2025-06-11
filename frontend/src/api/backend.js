@@ -17,9 +17,9 @@ export async function getHealthStatus() {
   }
 }
 
-export async function getCollections() {
+export async function getCollections(host = 'localhost', port = 19530) {
   try {
-    const response = await fetch(`${getBackendUrl()}/api/milvus/collections`);
+    const response = await fetch(`${getBackendUrl()}/api/milvus/collections?host=${host}&port=${port}`);
     if (!response.ok) throw new Error("Failed to fetch collections");
     const json = await response.json();
     return json;

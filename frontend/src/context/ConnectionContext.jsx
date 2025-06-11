@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { CONFIG } from '../utils/config';
 
-const ConnectionContext = createContext();
+export const ConnectionContext = createContext();
 
 export function ConnectionProvider({ children }) {
   const [connected, setConnected] = useState(false);
