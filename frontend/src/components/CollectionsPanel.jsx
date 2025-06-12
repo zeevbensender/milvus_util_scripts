@@ -67,6 +67,22 @@ export default function CollectionsPanel() {
     fetchCollections();
   }, []);
 
+  const renderLoadStateBadge = (state) => {
+    console.log("==> COLLECTION LOADING STATE: " + state)
+    switch (state) {
+      case 0:
+        return <span className="badge bg-dark">Not Exist</span>;
+      case 1:
+        return <span className="badge bg-secondary">Not Loaded</span>;
+      case 2:
+        return <span className="badge bg-warning text-dark">Loading…</span>;
+      case 3:
+        return <span className="badge bg-success">Loaded</span>;
+      default:
+        return <span className="badge bg-light text-dark">Unknown</span>;
+    }
+  };
+
   return (
     <div className="container position-relative">
       <h2 className="mb-4">Collections</h2>
@@ -81,7 +97,7 @@ export default function CollectionsPanel() {
               <tr>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Load Status</th>
+                <th>Load State</th>
                 <th>Entity Count</th>
                 <th>Index Type</th>
                 <th>Actions</th>
@@ -92,11 +108,7 @@ export default function CollectionsPanel() {
                 <tr key={col.name}>
                   <td>{col.name}</td>
                   <td>{col.description}</td>
-                  <td>
-                    <span className={`badge ${col.loaded ? 'bg-success' : 'bg-secondary'}`}>
-                      {col.loaded ? 'Yes' : 'No'}
-                    </span>
-                  </td>
+                  <td>{renderLoadStateBadge(col.loaded)}</td>
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>

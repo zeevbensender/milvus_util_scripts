@@ -54,7 +54,7 @@ def ping_milvus(
 class CollectionInfo(BaseModel):
     name: str
     description: str
-    loaded: bool
+    loaded: int
     entity_count: int
     index_type: str
 
@@ -69,8 +69,8 @@ def build_milvus_client(host: str, port: int) -> MilvusClient:
 def fetch_collection_info(client: MilvusClient, name: str) -> CollectionInfo:
     entity_count = client.get_collection_stats(collection_name=name).get('row_count', -1)
     c_desc = client.describe_collection(collection_name=name)
-    loaded = utility.has_collection(name)
-    # loaded = int(client.get_load_state(collection_name=name)["state"])
+    loaded = int(client.get_load_state(collection_name=name)["state"])
+    print(f"===> Collection Loading State: {loaded}")
     i_desc = client.describe_index(collection_name=name, index_name="embedding")
     return CollectionInfo(
         name=name,
