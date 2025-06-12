@@ -1,20 +1,16 @@
-import { useEffect, useState, useContext, useRef } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { getCollections, postMilvusAction } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [loadingState, setLoadingState] = useState({ name: null, action: null });
-  const [confirmDrop, setConfirmDrop] = useState(null);
-  const toastRef = useRef();
+  const [actionLoading, setActionLoading] = useState({});
 
   const fetchCollections = async () => {
     try {
-      setLoading(true);
       const json = await getCollections(host, port);
       if (json.status === 'success') {
         setCollections(json.collections);
@@ -30,61 +26,33 @@ export default function CollectionsPanel() {
     }
   };
 
-  const showToast = (message, type = 'success') => {
-    const toastEl = toastRef.current;
-    if (toastEl) {
-      toastEl.querySelector('.toast-body').textContent = message;
-      toastEl.classList.remove('bg-success', 'bg-danger');
-      toastEl.classList.add(type === 'error' ? 'bg-danger' : 'bg-success');
-      const bsToast = bootstrap.Toast.getOrCreateInstance(toastEl);
-      bsToast.show();
-    }
-  };
-
-  const handleAction = async (action, name) => {
-    if (action === 'drop') {
-      setConfirmDrop(name);
-      return;
-    }
-
-    setLoadingState({ name, action });
-    try {
-      const res = await postMilvusAction(action, name, host, port);
-      if (res.status === 'success') {
-        await fetchCollections();
-        showToast(res.message);
-      } else {
-        showToast(`Error: ${res.message}`, 'error');
-      }
-    } catch (err) {
-      showToast(`Unexpected error: ${err.message}`, 'error');
-    } finally {
-      setLoadingState({ name: null, action: null });
-    }
-  };
-
   useEffect(() => {
-    fetchCollections();
+    fetchCollections(); // initial fetch
+
+    const intervalId = setInterval(fetchCollections, 10000); // poll every 10 seconds
+    return () => clearInterval(intervalId); // cleanup
   }, []);
 
-  const renderLoadStateBadge = (state) => {
-    console.log("==> COLLECTION LOADING STATE: " + state)
-    switch (state) {
-      case 0:
-        return <span className="badge bg-dark">Not Exist</span>;
-      case 1:
-        return <span className="badge bg-secondary">Not Loaded</span>;
-      case 2:
-        return <span className="badge bg-warning text-dark">Loading…</span>;
-      case 3:
-        return <span className="badge bg-success">Loaded</span>;
-      default:
-        return <span className="badge bg-light text-dark">Unknown</span>;
+  const handleAction = async (action, name) => {
+    setActionLoading((prev) => ({ ...prev, [name + action]: true }));
+    const res = await postMilvusAction(action, name, host, port);
+    if (res.status === 'success') {
+      console.log(res.message);
+    } else {
+      console.error(res.message);
+    }
+    await fetchCollections(); // refresh after action
+    setActionLoading((prev) => ({ ...prev, [name + action]: false }));
+  };
+
+  const confirmAndDrop = async (name) => {
+    if (window.confirm(`Collection "${name}" will be dropped and data lost forever. Continue?`)) {
+      await handleAction('drop', name);
     }
   };
 
   return (
-    <div className="container position-relative">
+    <div className="container">
       <h2 className="mb-4">Collections</h2>
 
       {loading && <div className="text-muted">Loading collections...</div>}
@@ -108,46 +76,37 @@ export default function CollectionsPanel() {
                 <tr key={col.name}>
                   <td>{col.name}</td>
                   <td>{col.description}</td>
-                  <td>{renderLoadStateBadge(col.loaded)}</td>
+                  <td>
+                    <span className={`badge ${
+                      col.loaded === 3 ? 'bg-success' :
+                      col.loaded === 2 ? 'bg-warning text-dark' :
+                      'bg-secondary'
+                    }`}>
+                      {{
+                        0: 'NotExist',
+                        1: 'NotLoad',
+                        2: 'Loading',
+                        3: 'Loaded'
+                      }[col.loaded]}
+                    </span>
+                  </td>
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-primary me-1"
-                      onClick={() => handleAction('load', col.name)}
-                      disabled={loadingState.name === col.name && loadingState.action === 'load'}
-                    >
-                      {loadingState.name === col.name && loadingState.action === 'load' ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-1" /> Loading…
-                        </>
-                      ) : (
-                        'Load'
-                      )}
+                    <button className="btn btn-sm btn-outline-primary me-1" disabled={actionLoading[col.name + 'load']} onClick={() => handleAction('load', col.name)}>
+                      {actionLoading[col.name + 'load'] ? (
+                        <span className="spinner-border spinner-border-sm" role="status" />
+                      ) : 'Load'}
                     </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-warning me-1"
-                      onClick={() => handleAction('release', col.name)}
-                      disabled={loadingState.name === col.name && loadingState.action === 'release'}
-                    >
-                      {loadingState.name === col.name && loadingState.action === 'release' ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-1" /> Releasing…
-                        </>
-                      ) : (
-                        'Release'
-                      )}
+                    <button className="btn btn-sm btn-outline-warning me-1" disabled={actionLoading[col.name + 'release']} onClick={() => handleAction('release', col.name)}>
+                      {actionLoading[col.name + 'release'] ? (
+                        <span className="spinner-border spinner-border-sm" role="status" />
+                      ) : 'Release'}
                     </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => handleAction('drop', col.name)}
-                    >
-                      Drop
+                    <button className="btn btn-sm btn-outline-danger" disabled={actionLoading[col.name + 'drop']} onClick={() => confirmAndDrop(col.name)}>
+                      {actionLoading[col.name + 'drop'] ? (
+                        <span className="spinner-border spinner-border-sm" role="status" />
+                      ) : 'Drop'}
                     </button>
                   </td>
                 </tr>
@@ -156,59 +115,6 @@ export default function CollectionsPanel() {
           </table>
         </div>
       )}
-
-      {/* Confirm Drop Modal */}
-      {confirmDrop && (
-        <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Confirm Drop</h5>
-                <button type="button" className="btn-close" onClick={() => setConfirmDrop(null)} />
-              </div>
-              <div className="modal-body">
-                <p>
-                  The collection <strong>{confirmDrop}</strong> will be permanently dropped. This action cannot be undone.
-                </p>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setConfirmDrop(null)}>Cancel</button>
-                <button className="btn btn-danger" onClick={async () => {
-                  const res = await postMilvusAction("drop", confirmDrop, host, port);
-                  setConfirmDrop(null);
-                  if (res.status === 'success') {
-                    await fetchCollections();
-                    showToast(res.message);
-                  } else {
-                    showToast(`Error: ${res.message}`, 'error');
-                  }
-                }}>Drop</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      <div className="toast-container position-fixed bottom-0 end-0 p-3" style={{ zIndex: 9999 }}>
-        <div
-          className="toast align-items-center text-white border-0"
-          role="alert"
-          ref={toastRef}
-          aria-live="assertive"
-          aria-atomic="true"
-        >
-          <div className="d-flex">
-            <div className="toast-body">Placeholder</div>
-            <button
-              type="button"
-              className="btn-close btn-close-white me-2 m-auto"
-              data-bs-dismiss="toast"
-              aria-label="Close"
-            ></button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
