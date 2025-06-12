@@ -4,7 +4,7 @@ from typing import List
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-from pymilvus import connections, utility, MilvusClient
+from pymilvus import connections, utility, MilvusClient, Collection
 from pymilvus.exceptions import MilvusException
 
 router = APIRouter(prefix="/api/milvus")
@@ -108,7 +108,57 @@ def list_collections(
                     traceback.print_exc()
 
         return CollectionResponse(status="success", collections=collections)
-
     except Exception as e:
         traceback.print_exc()
         return CollectionResponse(status="error", collections=[])
+
+@router.post("/collections/load")
+def load_collection(
+    name: str = Query(...),
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            client.load_collection(name)
+            # collection = Collection(name, using=alias)
+            # collection.load()
+        return {"status": "success", "message": f"Collection '{name}' is loaded."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@router.post("/collections/release")
+def release_collection(
+    name: str = Query(...),
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        print(f"About to release {name} collection")
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            client.release_collection(name)
+            # collection = Collection(name, using=alias)
+            # collection.release()
+        return {"status": "success", "message": f"Collection '{name}' released."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@router.delete("/collections/drop")
+def drop_collection(
+    name: str = Query(...),
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            client.drop_collection(name)
+        return {"status": "success", "message": f"Collection '{name}' dropped."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

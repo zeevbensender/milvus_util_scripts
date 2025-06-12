@@ -28,3 +28,10 @@ export async function getCollections(host = 'localhost', port = 19530) {
     return { status: 'error', collections: [] };
   }
 }
+
+export async function postMilvusAction(action, name, host, port) {
+  const response = await fetch(`${getBackendUrl()}/api/milvus/collections/${action}?name=${name}&host=${host}&port=${port}`, {
+    method: action === 'drop' ? 'DELETE' : 'POST',
+  });
+  return await response.json();
+}

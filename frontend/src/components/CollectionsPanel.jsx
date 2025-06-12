@@ -1,6 +1,6 @@
 // src/components/CollectionsPanel.jsx
 import { useEffect, useState, useContext } from 'react';
-import { getCollections } from '../api/backend';
+import { getCollections, postMilvusAction } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
 
 export default function CollectionsPanel() {
@@ -8,6 +8,16 @@ export default function CollectionsPanel() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+    const handleAction = async (action, name) => {
+      const res = await postMilvusAction(action, name, host, port);
+      if (res.status === 'success') {
+        alert(res.message);
+        window.location.reload();  // or re-fetch collections
+      } else {
+        alert(`Error: ${res.message}`);
+      }
+    };
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -46,6 +56,7 @@ export default function CollectionsPanel() {
                 <th>Loaded</th>
                 <th>Entity Count</th>
                 <th>Index Type</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -60,6 +71,11 @@ export default function CollectionsPanel() {
                   </td>
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
+                  <td>
+                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleAction('load', col.name)}>Load</button>
+                    <button className="btn btn-sm btn-outline-warning me-1" onClick={() => handleAction('release', col.name)}>Release</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction('drop', col.name)}>Drop</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
