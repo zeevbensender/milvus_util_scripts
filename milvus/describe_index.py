@@ -15,7 +15,7 @@ def show_index(host_name, collection_name, port="19530", alias="default"):
     # 3. Describe the collection
     rows = client.get_collection_stats(collection_name=collection_name)
     c_desc = client.describe_index(collection_name=collection_name, index_name="embedding")
-    print(f"==> Collection Description: {json.dumps(c_desc, indent=2, sort_keys=True)}; {rows}")
+    print(f"==> Index Description: {json.dumps(c_desc, indent=2, sort_keys=True)}; {rows}")
     
 
 if __name__ == "__main__":

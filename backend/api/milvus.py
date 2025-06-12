@@ -70,6 +70,7 @@ def fetch_collection_info(client: MilvusClient, name: str) -> CollectionInfo:
     entity_count = client.get_collection_stats(collection_name=name).get('row_count', -1)
     c_desc = client.describe_collection(collection_name=name)
     loaded = utility.has_collection(name)
+    # loaded = int(client.get_load_state(collection_name=name)["state"])
     i_desc = client.describe_index(collection_name=name, index_name="embedding")
     return CollectionInfo(
         name=name,
@@ -120,11 +121,13 @@ def load_collection(
     alias: str = Query("default")
 ):
     try:
+        print(f"About to load {name} collection")
         client = build_milvus_client(host, port)
         with milvus_connection(alias, host, port):
             client.load_collection(name)
             # collection = Collection(name, using=alias)
             # collection.load()
+        print(f"Collection {name} loaded")
         return {"status": "success", "message": f"Collection '{name}' is loaded."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -143,6 +146,7 @@ def release_collection(
             client.release_collection(name)
             # collection = Collection(name, using=alias)
             # collection.release()
+        print(f"Collection {name} released")
         return {"status": "success", "message": f"Collection '{name}' released."}
     except Exception as e:
         return {"status": "error", "message": str(e)}

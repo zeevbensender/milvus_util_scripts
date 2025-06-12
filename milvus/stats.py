@@ -1,5 +1,5 @@
 import sys
-from pymilvus import MilvusClient, utility
+from pymilvus import MilvusClient, utility, Collection
 import json
 
 
@@ -14,8 +14,11 @@ def stats(host_name, collection_name, port="19530", alias="default"):
     # client.create_collection(collection_name="test_collection", dimension=5)
     # 3. Describe the collection
     rows = client.get_collection_stats(collection_name=collection_name)
+    loaded = int(client.get_load_state(collection_name=collection_name)["state"])
+
     c_desc = client.describe_collection(collection_name=collection_name)
-    print(f"==> Collection Description: {json.dumps(c_desc, indent=2, sort_keys=True)}; {rows}")
+
+    print(f"==> Collection Description: {json.dumps(c_desc, indent=2, sort_keys=True)}; {rows}; LOADED: {loaded}")
     
 
 if __name__ == "__main__":
