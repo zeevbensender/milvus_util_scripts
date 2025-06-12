@@ -1,4 +1,5 @@
-import { useEffect, useState, useContext } from 'react';
+// src/components/CollectionsPanel.jsx
+import { useEffect, useState, useContext, useRef } from 'react';
 import { getCollections, postMilvusAction } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
 
@@ -7,14 +8,25 @@ export default function CollectionsPanel() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [actionLoading, setActionLoading] = useState({});
+  const [loadingCollection, setLoadingCollection] = useState(null);
+  const [toast, setToast] = useState(null);
+  const pollingRef = useRef(null);
+  const [sortKey, setSortKey] = useState(() => localStorage.getItem('sortKey') || 'name');
+  const [sortAsc, setSortAsc] = useState(() => localStorage.getItem('sortAsc') !== 'false');
 
   const fetchCollections = async () => {
     try {
       const json = await getCollections(host, port);
       if (json.status === 'success') {
-        setCollections(json.collections);
-        setError(null);
+        let sorted = [...json.collections];
+        sorted.sort((a, b) => {
+          const primary = sortAsc
+            ? a[sortKey] > b[sortKey]
+            : a[sortKey] < b[sortKey];
+          if (a[sortKey] !== b[sortKey]) return primary ? 1 : -1;
+          return a.name.localeCompare(b.name);
+        });
+        setCollections(sorted);
       } else {
         setError('Failed to load collections');
       }
@@ -27,33 +39,57 @@ export default function CollectionsPanel() {
   };
 
   useEffect(() => {
-    fetchCollections(); // initial fetch
+    fetchCollections();
+    pollingRef.current = setInterval(fetchCollections, 5000);
+    return () => clearInterval(pollingRef.current);
+  }, [host, port, sortKey, sortAsc]);
 
-    const intervalId = setInterval(fetchCollections, 10000); // poll every 10 seconds
-    return () => clearInterval(intervalId); // cleanup
-  }, []);
-
-  const handleAction = async (action, name) => {
-    setActionLoading((prev) => ({ ...prev, [name + action]: true }));
-    const res = await postMilvusAction(action, name, host, port);
-    if (res.status === 'success') {
-      console.log(res.message);
-    } else {
-      console.error(res.message);
-    }
-    await fetchCollections(); // refresh after action
-    setActionLoading((prev) => ({ ...prev, [name + action]: false }));
+  const handleSort = (key) => {
+    const newAsc = key === sortKey ? !sortAsc : true;
+    setSortKey(key);
+    setSortAsc(newAsc);
+    localStorage.setItem('sortKey', key);
+    localStorage.setItem('sortAsc', newAsc);
   };
 
-  const confirmAndDrop = async (name) => {
-    if (window.confirm(`Collection "${name}" will be dropped and data lost forever. Continue?`)) {
-      await handleAction('drop', name);
+  const handleAction = async (action, name) => {
+    setLoadingCollection(name);
+    if (action === 'load') {
+      postMilvusAction(action, name, host, port)
+        .catch((err) => {
+          console.error(err);
+          setToast({ type: 'error', message: `Failed to trigger load for ${name}` });
+        })
+        .finally(() => setLoadingCollection(null));
+      return;
     }
+
+    if (action === 'drop') {
+      const confirmed = window.confirm("Collection will be dropped and data lost forever. Proceed?");
+      if (!confirmed) {
+        setLoadingCollection(null);
+        return;
+      }
+    }
+
+    const res = await postMilvusAction(action, name, host, port);
+    setToast({
+      type: res.status === 'success' ? 'success' : 'error',
+      message: res.message
+    });
+    setLoadingCollection(null);
   };
 
   return (
     <div className="container">
       <h2 className="mb-4">Collections</h2>
+
+      {toast && (
+        <div className={`alert alert-${toast.type} alert-dismissible fade show`} role="alert">
+          {toast.message}
+          <button type="button" className="btn-close" onClick={() => setToast(null)}></button>
+        </div>
+      )}
 
       {loading && <div className="text-muted">Loading collections...</div>}
       {error && <div className="text-danger">{error}</div>}
@@ -63,11 +99,11 @@ export default function CollectionsPanel() {
           <table className="table table-bordered table-hover align-middle">
             <thead className="table-light">
               <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Load State</th>
-                <th>Entity Count</th>
-                <th>Index Type</th>
+                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>Name</th>
+                <th onClick={() => handleSort('description')} style={{ cursor: 'pointer' }}>Description</th>
+                <th onClick={() => handleSort('loaded')} style={{ cursor: 'pointer' }}>Load State</th>
+                <th onClick={() => handleSort('entity_count')} style={{ cursor: 'pointer' }}>Entity Count</th>
+                <th onClick={() => handleSort('index_type')} style={{ cursor: 'pointer' }}>Index Type</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -77,36 +113,21 @@ export default function CollectionsPanel() {
                   <td>{col.name}</td>
                   <td>{col.description}</td>
                   <td>
-                    <span className={`badge ${
-                      col.loaded === 3 ? 'bg-success' :
-                      col.loaded === 2 ? 'bg-warning text-dark' :
-                      'bg-secondary'
-                    }`}>
-                      {{
-                        0: 'NotExist',
-                        1: 'NotLoad',
-                        2: 'Loading',
-                        3: 'Loaded'
-                      }[col.loaded]}
+                    <span className={`badge ${col.loaded === 3 ? 'bg-success' : col.loaded === 2 ? 'bg-warning' : 'bg-secondary'}`}>
+                      {['NotExist', 'NotLoad', 'Loading', 'Loaded'][col.loaded] || col.loaded}
                     </span>
                   </td>
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
-                    <button className="btn btn-sm btn-outline-primary me-1" disabled={actionLoading[col.name + 'load']} onClick={() => handleAction('load', col.name)}>
-                      {actionLoading[col.name + 'load'] ? (
-                        <span className="spinner-border spinner-border-sm" role="status" />
-                      ) : 'Load'}
+                    <button className="btn btn-sm btn-outline-primary me-1" disabled={loadingCollection === col.name} onClick={() => handleAction('load', col.name)}>
+                      {loadingCollection === col.name ? <span className="spinner-border spinner-border-sm" /> : 'Load'}
                     </button>
-                    <button className="btn btn-sm btn-outline-warning me-1" disabled={actionLoading[col.name + 'release']} onClick={() => handleAction('release', col.name)}>
-                      {actionLoading[col.name + 'release'] ? (
-                        <span className="spinner-border spinner-border-sm" role="status" />
-                      ) : 'Release'}
+                    <button className="btn btn-sm btn-outline-warning me-1" disabled={loadingCollection === col.name} onClick={() => handleAction('release', col.name)}>
+                      {loadingCollection === col.name ? <span className="spinner-border spinner-border-sm" /> : 'Release'}
                     </button>
-                    <button className="btn btn-sm btn-outline-danger" disabled={actionLoading[col.name + 'drop']} onClick={() => confirmAndDrop(col.name)}>
-                      {actionLoading[col.name + 'drop'] ? (
-                        <span className="spinner-border spinner-border-sm" role="status" />
-                      ) : 'Drop'}
+                    <button className="btn btn-sm btn-outline-danger" disabled={loadingCollection === col.name} onClick={() => handleAction('drop', col.name)}>
+                      {loadingCollection === col.name ? <span className="spinner-border spinner-border-sm" /> : 'Drop'}
                     </button>
                   </td>
                 </tr>
