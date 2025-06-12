@@ -8,7 +8,7 @@ export default function CollectionsPanel() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [loadingCollection, setLoadingCollection] = useState(null);
+  const [loadingState, setLoadingState] = useState({ name: null, action: null });
   const [toast, setToast] = useState(null);
   const pollingRef = useRef(null);
   const [sortKey, setSortKey] = useState(() => localStorage.getItem('sortKey') || 'name');
@@ -53,21 +53,21 @@ export default function CollectionsPanel() {
   };
 
   const handleAction = async (action, name) => {
-    setLoadingCollection(name);
+    setLoadingState({ name, action });
     if (action === 'load') {
       postMilvusAction(action, name, host, port)
         .catch((err) => {
           console.error(err);
           setToast({ type: 'error', message: `Failed to trigger load for ${name}` });
         })
-        .finally(() => setLoadingCollection(null));
+        .finally(() => setLoadingState({ name: null, action: null }));
       return;
     }
 
     if (action === 'drop') {
       const confirmed = window.confirm("Collection will be dropped and data lost forever. Proceed?");
       if (!confirmed) {
-        setLoadingCollection(null);
+        setLoadingState({ name: null, action: null });
         return;
       }
     }
@@ -77,7 +77,7 @@ export default function CollectionsPanel() {
       type: res.status === 'success' ? 'success' : 'error',
       message: res.message
     });
-    setLoadingCollection(null);
+    setLoadingState({ name: null, action: null });
   };
 
   return (
@@ -120,14 +120,14 @@ export default function CollectionsPanel() {
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
-                    <button className="btn btn-sm btn-outline-primary me-1" disabled={loadingCollection === col.name} onClick={() => handleAction('load', col.name)}>
-                      {loadingCollection === col.name ? <span className="spinner-border spinner-border-sm" /> : 'Load'}
+                    <button className="btn btn-sm btn-outline-primary me-1" disabled={loadingState.name === col.name && loadingState.action === 'load'} onClick={() => handleAction('load', col.name)}>
+                      {loadingState.name === col.name && loadingState.action === 'load' ? <span className="spinner-border spinner-border-sm" /> : 'Load'}
                     </button>
-                    <button className="btn btn-sm btn-outline-warning me-1" disabled={loadingCollection === col.name} onClick={() => handleAction('release', col.name)}>
-                      {loadingCollection === col.name ? <span className="spinner-border spinner-border-sm" /> : 'Release'}
+                    <button className="btn btn-sm btn-outline-warning me-1" disabled={loadingState.name === col.name && loadingState.action === 'release'} onClick={() => handleAction('release', col.name)}>
+                      {loadingState.name === col.name && loadingState.action === 'release' ? <span className="spinner-border spinner-border-sm" /> : 'Release'}
                     </button>
-                    <button className="btn btn-sm btn-outline-danger" disabled={loadingCollection === col.name} onClick={() => handleAction('drop', col.name)}>
-                      {loadingCollection === col.name ? <span className="spinner-border spinner-border-sm" /> : 'Drop'}
+                    <button className="btn btn-sm btn-outline-danger" disabled={loadingState.name === col.name && loadingState.action === 'drop'} onClick={() => handleAction('drop', col.name)}>
+                      {loadingState.name === col.name && loadingState.action === 'drop' ? <span className="spinner-border spinner-border-sm" /> : 'Drop'}
                     </button>
                   </td>
                 </tr>
