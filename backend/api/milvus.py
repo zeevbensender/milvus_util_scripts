@@ -1,6 +1,6 @@
 import traceback
 from contextlib import contextmanager
-from typing import List
+from typing import List, Dict
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
@@ -166,3 +166,81 @@ def drop_collection(
         return {"status": "success", "message": f"Collection '{name}' dropped."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+
+
+class CollectionDetailsResponse(BaseModel):
+    status: str
+    name: str
+    description: str
+    schema: List[Dict]
+    index_info: Dict
+    entity_count: int
+    load_state: int
+    shard_num: int
+    auto_id: bool
+
+
+@router.get("/collections/{name}/details", response_model=CollectionDetailsResponse)
+def get_collection_details(
+    name: str,
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            desc = client.describe_collection(name)
+            schema_fields = desc.get("fields", [])
+
+            try:
+                index_info = client.describe_index(collection_name=name, index_name="embedding")
+            except Exception:
+                index_info = {}
+
+            stats = client.get_collection_stats(collection_name=name)
+            row_count = stats.get("row_count", -1)
+
+            try:
+                load_state = int(client.get_load_state(collection_name=name)["state"])
+            except:
+                load_state = -1
+
+            return CollectionDetailsResponse(
+                status="success",
+                name=name,
+                description=desc.get("description", ""),
+                schema=schema_fields,
+                index_info=index_info,
+                entity_count=row_count,
+                load_state=load_state,
+                shard_num=desc.get("shard_number", -1),
+                auto_id=desc.get("auto_id", False)
+            )
+
+    except MilvusException as e:
+        return CollectionDetailsResponse(
+            status="error",
+            name=name,
+            description="",
+            schema=[],
+            index_info={},
+            entity_count=-1,
+            load_state=-1,
+            shard_num=-1,
+            auto_id=False
+        )
+    except Exception as e:
+        return CollectionDetailsResponse(
+            status="error",
+            name=name,
+            description="",
+            schema=[],
+            index_info={},
+            entity_count=-1,
+            load_state=-1,
+            shard_num=-1,
+            auto_id=False
+        )
