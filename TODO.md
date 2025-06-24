@@ -1,34 +1,81 @@
-# 📋 Milvus Admin Panel – TODO List
+# Milvus Admin Panel – Project TODO
 
-## ✅ Milestone 1: Core MVP Scaffold
-- [x] Scaffold project structure (frontend, backend, Docker)
-- [x] Create FastAPI backend and React frontend
-- [x] Add /health endpoint
-- [x] Make frontend call backend dynamically using hostname
-- [x] Add and test ConnectionPanel component
-- [x] Add real Milvus connectivity check using pymilvus
+## ✅ Implemented Features
 
-## 🚧 Milestone 2: Connection UX & Config Foundation
-- [x] Add global ConnectionContext to manage connection status
-- [x] Add top-right connection status bar (green/red + host:port)
-- [x] Store last successful connection (host & port) in localStorage
-- [x] Autofill inputs from localStorage on page load
-- [x] Attempt auto-connect from saved settings
-- [x] Extract hardcoded values (e.g. port 8080, 19530) into `config.js`
-- [ ] Display connection errors clearly (invalid port, timeout, etc.)
-- [ ] Refactor layout into shell (sidebar, topbar, content area)
-- [ ] Apply minimal styling to sidebar, header, and form elements
-- [ ] Optional: initialize Tailwind for future styling
+### Backend (FastAPI)
 
-## 🔜 Milestone 3: Collection Management
-- [ ] Create CollectionBrowser panel in sidebar
-- [ ] Call Milvus list_collections (or wrap list.py)
-- [ ] Show table of collections with status and basic actions
-- [ ] Enable load/unload via buttons
-- [ ] Display error/success feedback on operations
+- `/ping` endpoint with error handling
+- `/collections` to list collections with:
+  - Entity count
+  - Index type
+  - Load state (0–3 enum)
+- Async collection actions:
+  - `/collections/load`
+  - `/collections/release`
+  - `/collections/drop`
 
-## 🧪 Future Ideas
-- [ ] Save multiple connection profiles (like pgAdmin)
-- [ ] Add /config endpoint from backend for frontend init values
-- [ ] Show Milvus version and server status in top bar
-- [ ] Option to reconnect/change Milvus instance without page reload
+### Frontend (React + Bootstrap)
+
+- ConnectionPanel.jsx:
+  - Auto-connect to last-used host (localStorage)
+  - Connection status shown at top
+- CollectionsPanel.jsx:
+  - Table displays name, desc, index type, load state, entity count
+  - Buttons for Load / Release / Drop
+  - Drop confirms with a dialog
+  - Load & Release show spinners
+  - Toast-based success/error messages
+  - Collection list is polled periodically (30s)
+  - Sorting by any column, always secondary-sorted by name
+  - Sort is persisted across reloads
+
+### Docker / Deploy
+
+- Backend Dockerfile for FastAPI server
+- Frontend Dockerfile using Vite build + Nginx
+- `docker-compose.yaml` to run backend + frontend in sync
+
+---
+
+## 🔥 Next Priority Feature: Collection Details Panel
+
+A new detailed panel showing complete metadata for a single collection.
+
+### Frontend:
+
+- New route: `/collections/:name`
+- New component: `<CollectionDetails />`
+  - Fetches schema, index info, row count, segments, load state
+  - Shows loading & error state
+  - Back button to return to main collection list
+- Collection name in table becomes a link
+
+### Backend:
+
+- New endpoint: `/collections/{name}/details`
+  - Returns: schema, stats, load state, segment info, index types
+  - Enhances and decomposes existing `fetch_collection_info()` logic
+
+---
+
+## 🧊 Future Milestones (After Details Panel)
+
+### 1. UI Polish & Feedback
+- Improve empty state / error handling
+- Add success/failure icons to table rows
+
+### 2. Collection Creation
+- Add button to create new collection (form UI)
+- Backend endpoint to create collection
+
+### 3. Advanced Metrics
+- Show index size, memory usage, segment count
+- Visualize load state or memory graphically
+
+### 4. Search & Filtering
+- Add input for client-side filter in table
+- Highlight search results / apply dynamic filtering
+
+### 5. Authentication & Profiles
+- Support token-based auth for secured Milvus instances
+- Save multiple connection configs (like pgAdmin profiles)

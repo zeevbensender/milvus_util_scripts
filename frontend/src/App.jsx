@@ -1,59 +1,54 @@
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import ConnectionPanel from './components/ConnectionPanel';
 import CollectionsPanel from './components/CollectionsPanel';
+import CollectionDetailsPanel from './components/CollectionDetailsPanel';
 import StatusBar from './components/StatusBar';
 
-const TABS = {
-  CONNECTION: 'connection',
-  COLLECTIONS: 'collections',
-};
+function Sidebar() {
+  const navigate = useNavigate();
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState(TABS.CONNECTION);
+  return (
+    <aside className="col-2 bg-light border-end p-3">
+      <h5 className="text-primary">Milvus Admin</h5>
+      <ul className="nav flex-column">
+        <li className="nav-item">
+          <button className="nav-link btn btn-link" onClick={() => navigate('/connection')}>
+            Connection
+          </button>
+        </li>
+        <li className="nav-item">
+          <button className="nav-link btn btn-link" onClick={() => navigate('/collections')}>
+            Collections
+          </button>
+        </li>
+      </ul>
+    </aside>
+  );
+}
 
-  const renderActivePanel = () => {
-    switch (activeTab) {
-      case TABS.CONNECTION:
-        return <ConnectionPanel />;
-      case TABS.COLLECTIONS:
-        return <CollectionsPanel />;
-      default:
-        return <div className="p-3">Select a panel from the sidebar</div>;
-    }
-  };
-
+function AppLayout() {
   return (
     <div className="container-fluid">
       <div className="row vh-100">
-        {/* Sidebar */}
-        <aside className="col-2 bg-light border-end p-3">
-          <h5 className="text-primary">Milvus Admin</h5>
-          <ul className="nav flex-column">
-            <li className="nav-item">
-              <button
-                className={`nav-link btn btn-link ${activeTab === TABS.CONNECTION ? 'fw-bold' : ''}`}
-                onClick={() => setActiveTab(TABS.CONNECTION)}
-              >
-                Connection
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link btn btn-link ${activeTab === TABS.COLLECTIONS ? 'fw-bold' : ''}`}
-                onClick={() => setActiveTab(TABS.COLLECTIONS)}
-              >
-                Collections
-              </button>
-            </li>
-          </ul>
-        </aside>
-
-        {/* Main Content */}
+        <Sidebar />
         <main className="col-10 p-3 position-relative">
           <StatusBar />
-          {renderActivePanel()}
+          <Routes>
+            <Route path="/" element={<ConnectionPanel />} />
+            <Route path="/connection" element={<ConnectionPanel />} />
+            <Route path="/collections" element={<CollectionsPanel />} />
+            <Route path="/collections/:name" element={<CollectionDetailsPanel />} />
+          </Routes>
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
+    </BrowserRouter>
   );
 }
