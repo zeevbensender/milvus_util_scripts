@@ -94,6 +94,7 @@ def list_collections(
     port: int = Query(19530),
     alias: str = Query("default")
 ):
+    # TODO: make sure that non-indexed collections are as well
     try:
         client = build_milvus_client(host, port)
         with milvus_connection(alias, host, port):

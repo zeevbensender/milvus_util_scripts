@@ -5,6 +5,7 @@ import { ConnectionContext } from '../context/ConnectionContext';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
+  const isReady = host && port;
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +40,7 @@ export default function CollectionsPanel() {
   };
 
   useEffect(() => {
+    if (!isReady) return;
     fetchCollections();
     pollingRef.current = setInterval(fetchCollections, 5000);
     return () => clearInterval(pollingRef.current);

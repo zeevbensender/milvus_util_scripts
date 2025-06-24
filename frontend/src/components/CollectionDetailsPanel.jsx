@@ -12,10 +12,10 @@ export default function CollectionDetailsPanel() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const { host, port } = useMilvusConnection();
-
+  const isReady = host && port;
 
   useEffect(() => {
-
+    if (!isReady) return;
     const fetchData = async () => {
       try {
         const data = await getCollectionDetails(name, host, port);

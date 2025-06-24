@@ -1,12 +1,11 @@
-// hooks/useMilvusConnection.js
 import { useContext } from 'react';
 import { ConnectionContext } from '../context/ConnectionContext';
 
 export function useMilvusConnection() {
-  const { host, port } = useContext(ConnectionContext);
+  const { host: contextHost, port: contextPort } = useContext(ConnectionContext);
 
-  const effectiveHost = host || localStorage.getItem('milvusHost');
-  const effectivePort = port || localStorage.getItem('milvusPort');
+  const host = contextHost || localStorage.getItem('milvusHost');
+  const port = contextPort || localStorage.getItem('milvusPort');
 
-  return { host: effectiveHost, port: effectivePort };
+  return { host, port };
 }

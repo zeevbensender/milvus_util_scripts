@@ -8,6 +8,7 @@ export default function ConnectionPanel() {
   const [host, setHost] = useState('');
   const [port, setPort] = useState('19530');
 
+  // TODO: fetch the host and port values for default
   const handleConnect = () => {
     const targetHost = mode === 'auto' ? 'localhost' : host;
     const targetPort = mode === 'auto' ? '19530' : port;
