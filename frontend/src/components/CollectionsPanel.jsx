@@ -110,7 +110,11 @@ export default function CollectionsPanel() {
             <tbody>
               {collections.map((col) => (
                 <tr key={col.name}>
-                  <td>{col.name}</td>
+                  <td>
+                   <a href={`/collections/${encodeURIComponent(col.name)}`} className="text-decoration-none">
+                    {col.name}
+                   </a>
+                  </td>
                   <td>{col.description}</td>
                   <td>
                     <span className={`badge ${col.loaded === 3 ? 'bg-success' : col.loaded === 2 ? 'bg-warning' : 'bg-secondary'}`}>
