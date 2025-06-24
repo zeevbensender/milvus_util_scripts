@@ -1,27 +1,24 @@
 import { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Spinner } from 'react-bootstrap';
-import { ConnectionContext } from '../context/ConnectionContext';
+// import { ConnectionContext } from '../context/ConnectionContext';
 import { getCollectionDetails } from '../api/backend';
+import { useMilvusConnection } from '../hooks/useMilvusConnection.js'
 
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
-  const { host, port } = useContext(ConnectionContext);
+//   const { host, port } = useContext(ConnectionContext);
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { host, port } = useMilvusConnection();
 
 
   useEffect(() => {
-     const effectiveHost = host || localStorage.getItem('milvusHost');
-     const effectivePort = port || localStorage.getItem('milvusPort');
 
     const fetchData = async () => {
       try {
-        if (!effectiveHost || !effectivePort){
-            return;
-        }
-        const data = await getCollectionDetails(name, effectiveHost, effectivePort);
+        const data = await getCollectionDetails(name, host, port);
         setDetails(data);
       } catch (err) {
         console.error("Failed to fetch collection details:", err);
