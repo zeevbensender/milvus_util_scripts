@@ -66,6 +66,7 @@ class CollectionResponse(BaseModel):
 def build_milvus_client(host: str, port: int) -> MilvusClient:
     return MilvusClient(uri=f"http://{host}:{port}")
 
+
 def fetch_collection_info(client: MilvusClient, name: str) -> CollectionInfo:
     entity_count = client.get_collection_stats(collection_name=name).get('row_count', -1)
     c_desc = client.describe_collection(collection_name=name)
@@ -77,8 +78,9 @@ def fetch_collection_info(client: MilvusClient, name: str) -> CollectionInfo:
         description=c_desc.get("description", ""),
         loaded=loaded,
         entity_count=entity_count,
-        index_type=i_desc.get("index_type", "N/A")
+        index_type=i_desc.get("index_type", "N/A") if i_desc else "N/A"
     )
+
 
 @contextmanager
 def milvus_connection(alias: str, host: str, port: int):
@@ -87,6 +89,7 @@ def milvus_connection(alias: str, host: str, port: int):
         yield
     finally:
         connections.disconnect(alias)
+
 
 @router.get("/collections", response_model=CollectionResponse)
 def list_collections(
@@ -114,6 +117,7 @@ def list_collections(
         traceback.print_exc()
         return CollectionResponse(status="error", collections=[])
 
+
 @router.post("/collections/load")
 def load_collection(
     name: str = Query(...),
@@ -132,6 +136,7 @@ def load_collection(
         return {"status": "success", "message": f"Collection '{name}' is loaded."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
 
 @router.post("/collections/release")
 def release_collection(
@@ -169,18 +174,51 @@ def drop_collection(
         return {"status": "error", "message": str(e)}
 
 
-
-
 class CollectionDetailsResponse(BaseModel):
+    collection_id: int = 0
     status: str
     name: str
     description: str
     schema: List[Dict]
+    index_type: str = "Not Indexed"
     index_info: Dict
     entity_count: int
     load_state: int
     shard_num: int
     auto_id: bool
+def map_data_type(datatype: int):
+    data_type_map = {
+        0: "None",
+        1: "Boolean",
+        2: "Int8",
+        3: "Int16",
+        4: "Int32",
+        5: "Int64",
+        10: "Float",
+        11: "Double",
+        20: "String",
+        21: "Varchar",
+        22: "Array",
+        23: "Json",
+        100: "Binary Vector",
+        101: "Float Vector"
+    }
+    return data_type_map.get(datatype, "Unknown")
+
+
+def get_fields_data(fields):
+    return [
+        {
+            "name": field.name,
+            "type": map_data_type(field.dtype),
+            "description": field.description,
+            "primary": field.is_primary,
+            "auto_id": field.is_auto_id,
+            "dimension": field.dim,
+            # "index": field.index_params
+        }
+        for field in fields
+    ]
 
 
 @router.get("/collections/{name}/details", response_model=CollectionDetailsResponse)
@@ -193,11 +231,15 @@ def get_collection_details(
     try:
         client = build_milvus_client(host, port)
         with milvus_connection(alias, host, port):
+            coll = Collection(name=name)
+            # print(f"==> --> COLLECTION NAME: {coll.name}")
             desc = client.describe_collection(name)
-            schema_fields = desc.get("fields", [])
+            schema_fields = get_fields_data(coll.schema.fields)
+            # schema_fields = [{}]
 
             try:
-                index_info = client.describe_index(collection_name=name, index_name="embedding")
+                # index_info = client.describe_index(collection_name=name, index_name="embedding")
+                index_info = {}
             except Exception:
                 index_info = {}
 
@@ -208,20 +250,25 @@ def get_collection_details(
                 load_state = int(client.get_load_state(collection_name=name)["state"])
             except:
                 load_state = -1
-
+            # print(f"=====>> DESC {desc}")
             return CollectionDetailsResponse(
                 status="success",
+                collection_id=desc["collection_id"],
                 name=name,
-                description=desc.get("description", ""),
+                description=coll.description,
                 schema=schema_fields,
                 index_info=index_info,
                 entity_count=row_count,
                 load_state=load_state,
-                shard_num=desc.get("shard_number", -1),
-                auto_id=desc.get("auto_id", False)
+
+                shard_num=coll.num_shards,
+                auto_id=coll.schema.auto_id
             )
 
     except MilvusException as e:
+        print(f"___________________________________________________")
+        traceback.print_exc()
+        print(f"___________________________________________________")
         return CollectionDetailsResponse(
             status="error",
             name=name,
@@ -234,6 +281,9 @@ def get_collection_details(
             auto_id=False
         )
     except Exception as e:
+        print(f"___________________________________________________")
+        traceback.print_exc()
+        print(f"___________________________________________________")
         return CollectionDetailsResponse(
             status="error",
             name=name,

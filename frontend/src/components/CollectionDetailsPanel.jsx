@@ -18,7 +18,10 @@ export default function CollectionDetailsPanel() {
     }
 
     try {
+//       console.log("HOST: " + host + ", PORT: " + port)
       const data = await getCollectionDetails(name, host, port);
+//       console.log("===> DATA: " + JSON.stringify(data))
+//       console.log("===> COLL ID: " + data.collection_id)
       setDetails(data);
       setError(null);
     } catch (err) {
@@ -55,11 +58,19 @@ export default function CollectionDetailsPanel() {
     <div className="m-3">
       <h4>Collection: {name}</h4>
       <ul className="list-group">
+        <li className="list-group-item">Collection ID: {details.collection_id || '—'}</li>
         <li className="list-group-item">Description: {details.description || '—'}</li>
-        <li className="list-group-item">Index Type: {details.index_type}</li>
-        <li className="list-group-item">Entities: {details.entity_count}</li>
-        <li className="list-group-item">Load State: {details.load_state}</li>
+        <li className="list-group-item">Entities: {details.entity_count.toLocaleString()}</li>
+        <li className="list-group-item">Load State: {['NotExist', 'NotLoad', 'Loading', 'Loaded'][details.load_state] || details.load_state}</li>
+
         {/* Extend with more fields if needed */}
+      </ul>
+      <h5>Schema:</h5>
+      <ul className="list-group">
+        {details.schema.map((field) => (
+        <li className="list-group-item"><b>{field.name}</b> {field.auto_id ? "(AutoId)" : ""} {field.primary ? "(Primary)" : ""} - {field.type}{field.dimension ? " - Dimension: " + field.dimension : ""} </li>
+      ))}
+
       </ul>
     </div>
   );
