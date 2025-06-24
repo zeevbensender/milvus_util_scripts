@@ -1,28 +1,30 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Spinner } from 'react-bootstrap';
-// import { ConnectionContext } from '../context/ConnectionContext';
 import { getCollectionDetails } from '../api/backend';
-import { useMilvusConnection } from '../hooks/useMilvusConnection.js'
+import { useMilvusConnection } from '../hooks/useMilvusConnection';
 
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
-//   const { host, port } = useContext(ConnectionContext);
+  const { host, port } = useMilvusConnection();
+
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { host, port } = useMilvusConnection();
-  const isReady = host && port;
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!host || !port) {
+      // Wait until both host and port are available
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const data = await getCollectionDetails(name, host, port);
         setDetails(data);
       } catch (err) {
         console.error("Failed to fetch collection details:", err);
-        setError("Failed to fetch collection details");
+        setError("Failed to fetch collection details.");
       } finally {
         setLoading(false);
       }
@@ -31,7 +33,7 @@ export default function CollectionDetailsPanel() {
     fetchData();
   }, [name, host, port]);
 
-  if (loading) {
+  if (!host || !port || loading) {
     return <Spinner animation="border" className="m-3" />;
   }
 
