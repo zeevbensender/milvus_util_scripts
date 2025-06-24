@@ -7,33 +7,39 @@ import { useMilvusConnection } from '../hooks/useMilvusConnection';
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
   const { host, port } = useMilvusConnection();
-
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!host || !port) {
-      // Wait until both host and port are available
+      console.warn("Host or port not available yet. Skipping fetch.");
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        const data = await getCollectionDetails(name, host, port);
-        setDetails(data);
-      } catch (err) {
-        console.error("Failed to fetch collection details:", err);
-        setError("Failed to fetch collection details.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      const data = await getCollectionDetails(name, host, port);
+      setDetails(data);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch collection details:", err);
+      setError("Failed to fetch collection details");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    fetchData(); // initial load
+
+    const interval = setInterval(() => {
+      fetchData(); // periodic refresh
+    }, 10000);
+
+    return () => clearInterval(interval); // cleanup
   }, [name, host, port]);
 
-  if (!host || !port || loading) {
+  if (loading) {
     return <Spinner animation="border" className="m-3" />;
   }
 
@@ -53,7 +59,7 @@ export default function CollectionDetailsPanel() {
         <li className="list-group-item">Index Type: {details.index_type}</li>
         <li className="list-group-item">Entities: {details.entity_count}</li>
         <li className="list-group-item">Load State: {details.load_state}</li>
-        {/* Extend with more fields as needed */}
+        {/* Extend with more fields if needed */}
       </ul>
     </div>
   );

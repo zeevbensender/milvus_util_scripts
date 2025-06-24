@@ -38,12 +38,11 @@ export async function postMilvusAction(action, name, host, port) {
 
 export async function getCollectionDetails(name, host, port) {
   const the_url = `${getBackendUrl()}/api/milvus/collections/${encodeURIComponent(name)}/details?host=${host}&port=${port}`
-  console.log("Inside get collection details: " + the_url)
+
   try {
     const response = await fetch(the_url);
     if (!response.ok) throw new Error("Failed to fetch the " + name + " collection details");
     const json = await response.json();
-    console.log(json)
     return json;
   } catch (err) {
     console.error("Error fetching collections:", err);
