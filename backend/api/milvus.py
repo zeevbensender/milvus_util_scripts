@@ -1,3 +1,4 @@
+import json
 import traceback
 from contextlib import contextmanager
 from typing import List, Dict
@@ -181,11 +182,13 @@ class CollectionDetailsResponse(BaseModel):
     description: str
     schema: List[Dict]
     index_type: str = "Not Indexed"
-    index_info: Dict
     entity_count: int
     load_state: int
     shard_num: int
     auto_id: bool
+    index_info: List[Dict] = []
+
+
 def map_data_type(datatype: int):
     data_type_map = {
         0: "None",
@@ -215,10 +218,14 @@ def get_fields_data(fields):
             "primary": field.is_primary,
             "auto_id": field.is_auto_id,
             "dimension": field.dim,
-            # "index": field.index_params
+            # "index": indexes.get(field.name, {}).get("index_param", None) if indexes else None
         }
         for field in fields
     ]
+
+
+def get_indexes(coll: Collection):
+    return {idx.field_name: idx.to_dict() for idx in coll.indexes}
 
 
 @router.get("/collections/{name}/details", response_model=CollectionDetailsResponse)
@@ -230,21 +237,15 @@ def get_collection_details(
 ):
     try:
         client = build_milvus_client(host, port)
+
         with milvus_connection(alias, host, port):
             coll = Collection(name=name)
             # print(f"==> --> COLLECTION NAME: {coll.name}")
             desc = client.describe_collection(name)
+            indexes = get_indexes(coll)
             schema_fields = get_fields_data(coll.schema.fields)
-            # schema_fields = [{}]
 
-            try:
-                # index_info = client.describe_index(collection_name=name, index_name="embedding")
-                index_info = {}
-            except Exception:
-                index_info = {}
 
-            stats = client.get_collection_stats(collection_name=name)
-            row_count = stats.get("row_count", -1)
 
             try:
                 load_state = int(client.get_load_state(collection_name=name)["state"])
@@ -257,9 +258,10 @@ def get_collection_details(
                 name=name,
                 description=coll.description,
                 schema=schema_fields,
-                index_info=index_info,
-                entity_count=row_count,
+                index_type=next(iter(indexes.values())).get("index_param", {}).get("index_type", "") if indexes else "",
+                entity_count=coll.num_entities,
                 load_state=load_state,
+                index_info=list(indexes.values()),
 
                 shard_num=coll.num_shards,
                 auto_id=coll.schema.auto_id
@@ -274,7 +276,6 @@ def get_collection_details(
             name=name,
             description="",
             schema=[],
-            index_info={},
             entity_count=-1,
             load_state=-1,
             shard_num=-1,
@@ -289,7 +290,6 @@ def get_collection_details(
             name=name,
             description="",
             schema=[],
-            index_info={},
             entity_count=-1,
             load_state=-1,
             shard_num=-1,
