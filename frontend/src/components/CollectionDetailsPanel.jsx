@@ -29,7 +29,7 @@ export default function CollectionDetailsPanel() {
 
     if (host && port) {
       fetchData();
-      timer = setInterval(fetchData, 10000);
+      timer = setInterval(fetchData, 5000);
     }
 
     return () => clearInterval(timer);
@@ -118,36 +118,36 @@ function getCollectionSchema(schema) {
 function getCollectionIndex(indexInfo) {
   if (!indexInfo?.length) return null;
 
-  const sorted = [...indexInfo].sort((a, b) => (a.index_name || '').localeCompare(b.index_name || ''));
+  const sorted = [...indexInfo].sort((a, b) => (b.field || '').localeCompare(a.field || ''));
 
   return (
     <div className="mb-4">
       <h5>Index Info</h5>
       {sorted.map((idx, i) => (
         <Table striped bordered hover responsive key={i} style={{ maxWidth: 'fit-content' }}>
+          <thead>
+            <tr>
+              <th>Field Name</th>
+              {idx.index_name !== idx.field && (
+                <th>Index Name</th>
+              )}
+              <th>Index Type</th>
+              <th>Metric Type</th>
+            </tr>
+          </thead>
           <tbody>
             <tr>
-              <th>Index Name</th>
-              <td>{idx.index_name}</td>
-            </tr>
+              <td>{idx.field}</td>
             {idx.index_name !== idx.field && (
-              <tr>
-                <th>Field Name</th>
-                <td>{idx.field}</td>
-              </tr>
+                <td>{idx.index_name}</td>
             )}
-            <tr>
-              <th>Index Type</th>
               <td>{idx.index_param.index_type}</td>
-            </tr>
-            <tr>
-              <th>Metric Type</th>
               <td>{idx.index_param.metric_type}</td>
             </tr>
             {Object.entries(idx.index_param.params || {}).map(([key, value]) => (
               <tr key={key}>
                 <th>{key}</th>
-                <td>{value.toString()}</td>
+                <td colSpan={2}>{value.toString()}</td>
               </tr>
             ))}
           </tbody>
