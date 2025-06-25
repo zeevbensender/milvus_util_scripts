@@ -128,9 +128,6 @@ function getCollectionIndex(indexInfo) {
           <thead>
             <tr>
               <th>Field Name</th>
-              {idx.index_name !== idx.field && (
-                <th>Index Name</th>
-              )}
               <th>Index Type</th>
               <th>Metric Type</th>
             </tr>
@@ -138,12 +135,21 @@ function getCollectionIndex(indexInfo) {
           <tbody>
             <tr>
               <td>{idx.field}</td>
-            {idx.index_name !== idx.field && (
-                <td>{idx.index_name}</td>
-            )}
               <td>{idx.index_param.index_type}</td>
               <td>{idx.index_param.metric_type}</td>
             </tr>
+              {idx.index_name !== idx.field && (
+              <tr key={key}>
+                <th>Index Name</th>
+                <td colSpan={2}>{idx.index_name}</td>
+              </tr>
+              )}
+              {idx.progress && (
+              <tr key={key}>
+                <th>Indexing Progress</th>
+                <td colSpan={2}>{idx.progress.indexed_rows} of {idx.progress.total_rows} </td>
+              </tr>
+              )}
             {Object.entries(idx.index_param.params || {}).map(([key, value]) => (
               <tr key={key}>
                 <th>{key}</th>
