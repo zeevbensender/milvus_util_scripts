@@ -53,7 +53,6 @@ function getCollectionData(details) {
 
   return (
     <div className="mb-4">
-      <h5>Collection Info</h5>
       <Table striped bordered hover responsive style={{ maxWidth: 'fit-content' }}>
         <thead>
           <tr>
@@ -146,10 +145,16 @@ function getCollectionIndex(indexInfo) {
               )}
               {idx.progress && (
               <tr key='progress'>
-                <th>Indexing Progress</th>
-                <td colSpan={2}>{idx.progress.indexed_rows.toLocaleString()} of {idx.progress.total_rows.toLocaleString()} </td>
+                <td colSpan={3}>Progress: {
+                    (idx.progress.indexed_rows / idx.progress.total_rows * 100).toFixed(2)
+                    }% (Pending Rows: {idx.progress.pending_index_rows.toLocaleString()}) </td>
               </tr>
               )}
+            {
+               idx.index_param.params && (
+               <tr><th colSpan={3}>Index Parameters</th></tr>
+               )
+            }
             {Object.entries(idx.index_param.params || {}).map(([key, value]) => (
               <tr key={key}>
                 <th>{key}</th>
