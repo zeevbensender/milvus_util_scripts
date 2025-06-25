@@ -139,13 +139,13 @@ function getCollectionIndex(indexInfo) {
               <td>{idx.index_param.metric_type}</td>
             </tr>
               {idx.index_name !== idx.field && (
-              <tr key={key}>
+              <tr key='index_name'>
                 <th>Index Name</th>
                 <td colSpan={2}>{idx.index_name}</td>
               </tr>
               )}
               {idx.progress && (
-              <tr key={key}>
+              <tr key='progress'>
                 <th>Indexing Progress</th>
                 <td colSpan={2}>{idx.progress.indexed_rows.toLocaleString()} of {idx.progress.total_rows.toLocaleString()} </td>
               </tr>
