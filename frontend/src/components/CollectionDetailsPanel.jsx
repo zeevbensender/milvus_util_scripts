@@ -61,7 +61,7 @@ export default function CollectionDetailsPanel() {
         <li className="list-group-item">Collection ID: {details.collection_id || '—'}</li>
         <li className="list-group-item">Description: {details.description || '—'}</li>
         <li className="list-group-item">Entities: {details.entity_count.toLocaleString()}</li>
-        <li className="list-group-item">Load State: {['NotExist', 'NotLoad', 'Loading', 'Loaded'][details.load_state] || details.load_state}</li>
+        <li className="list-group-item">Load State: {['NotExist', 'NotLoad', 'Loading', 'Loaded'][details.load_state] || "Unknown"}</li>
 
         {/* Extend with more fields if needed */}
       </ul>
@@ -70,8 +70,23 @@ export default function CollectionDetailsPanel() {
         {details.schema.map((field) => (
         <li className="list-group-item"><b>{field.name}</b> {field.auto_id ? "(AutoId)" : ""} {field.primary ? "(Primary)" : ""} - {field.type}{field.dimension ? " - Dimension: " + field.dimension : ""} </li>
       ))}
-
       </ul>
+
     </div>
   );
+}
+
+default function IndexTable(indexes) {
+    if(!indexes){
+        return ""
+    }
+    return(
+      <h5>Index:</h5>
+      <ul className="list-group">
+        {indexes.map((index) => (
+        <li className="list-group-item"><b>{field.name}</b> {field.auto_id ? "(AutoId)" : ""} {field.primary ? "(Primary)" : ""} - {field.type}{field.dimension ? " - Dimension: " + field.dimension : ""} </li>
+      ))}
+      </ul>
+
+    )
 }
