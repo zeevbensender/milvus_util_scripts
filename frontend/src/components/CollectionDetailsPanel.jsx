@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Alert, Spinner, Table } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Alert, Spinner, Table, Card } from 'react-bootstrap';
 import { getCollectionDetails } from '../api/backend';
 import { useMilvusConnection } from '../hooks/useMilvusConnection';
 
@@ -12,22 +12,27 @@ export default function CollectionDetailsPanel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let timer;
+
     const fetchData = async () => {
-      if (!host || !port) return;
       try {
         const data = await getCollectionDetails(name, host, port);
         setDetails(data);
+        setError(null);
       } catch (err) {
-        console.error("Failed to fetch collection details:", err);
-        setError("Failed to fetch collection details");
+        console.error('Failed to fetch collection details:', err);
+        setError('Failed to fetch collection details');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+    if (host && port) {
+      fetchData();
+      timer = setInterval(fetchData, 10000);
+    }
+
+    return () => clearInterval(timer);
   }, [name, host, port]);
 
   if (loading) return <Spinner animation="border" className="m-3" />;
@@ -45,90 +50,109 @@ export default function CollectionDetailsPanel() {
 }
 
 function getCollectionData(details) {
+
   return (
-    <>
+    <div className="mb-4">
       <h5>Collection Info</h5>
-      <ul className="list-group mb-4">
-        <li className="list-group-item">Collection ID: {details.collection_id || '—'}</li>
-        <li className="list-group-item">Description: {details.description || '—'}</li>
-        <li className="list-group-item">Entities: {details.entity_count.toLocaleString()}</li>
-        <li className="list-group-item">Load State: {['NotExist', 'NotLoad', 'Loading', 'Loaded'][details.load_state] || 'Unknown'}</li>
-      </ul>
-    </>
+      <Table striped bordered hover responsive style={{ maxWidth: 'fit-content' }}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Collection ID</th>
+            <th>Description</th>
+            <th>Entities</th>
+            <th>Load State</th>
+          </tr>
+        </thead>
+        <tbody>
+            <tr>
+              <td>{details.name}</td>
+              <td>{details.collection_id}</td>
+              <td>{details.description || ''}</td>
+              <td>{details.entity_count.toLocaleString()}</td>
+              <td>{['NotExist', 'NotLoad', 'Loading', 'Loaded'][details.load_state] || 'Unknown'}</td>
+            </tr>
+        </tbody>
+      </Table>
+    </div>
   );
 }
 
 function getCollectionSchema(schema) {
-  if (!schema || !Array.isArray(schema) || schema.length === 0) return null;
+  if (!schema?.length) return null;
+
+  const hasAutoId = schema.some((field) => field.auto_id != null);
+  const hasDesc = schema.some((field) => field.description);
+
   return (
-    <>
+    <div className="mb-4">
       <h5>Schema</h5>
-      <Table striped bordered hover>
+      <Table striped bordered hover responsive style={{ maxWidth: 'fit-content' }}>
         <thead>
           <tr>
             <th>Field Name</th>
             <th>Type</th>
             <th>Primary</th>
-            <th>Auto ID</th>
+            {hasAutoId && <th>Auto ID</th>}
             <th>Dimension</th>
-            <th>Description</th>
+            {hasDesc && <th>Description</th>}
           </tr>
         </thead>
         <tbody>
-          {schema.map((field, i) => (
-            <tr key={i}>
+          {schema.map((field, idx) => (
+            <tr key={idx}>
               <td>{field.name}</td>
               <td>{field.type}</td>
               <td>{field.primary ? 'Yes' : ''}</td>
-              <td>{field.auto_id ? 'Yes' : ''}</td>
-              <td>{field.dimension || '—'}</td>
-              <td>{field.description || '—'}</td>
+              {hasAutoId && <td>{field.auto_id ? 'Yes' : ''}</td>}
+              <td>{field.dimension ?? ''}</td>
+              {hasDesc && <td>{field.description || '—'}</td>}
             </tr>
           ))}
         </tbody>
       </Table>
-    </>
+    </div>
   );
 }
 
 function getCollectionIndex(indexInfo) {
-  if (!indexInfo || !Array.isArray(indexInfo) || indexInfo.length === 0) return null;
+  if (!indexInfo?.length) return null;
+
+  const sorted = [...indexInfo].sort((a, b) => (a.index_name || '').localeCompare(b.index_name || ''));
+
   return (
-    <>
+    <div className="mb-4">
       <h5>Index Info</h5>
-      {indexInfo.map((idx, i) => (
-        <div key={i} className="mb-4">
-          <Table bordered>
-            <tbody>
+      {sorted.map((idx, i) => (
+        <Table striped bordered hover responsive key={i} style={{ maxWidth: 'fit-content' }}>
+          <tbody>
+            <tr>
+              <th>Index Name</th>
+              <td>{idx.index_name}</td>
+            </tr>
+            {idx.index_name !== idx.field && (
               <tr>
-                <th>Index Name</th>
-                <td>{idx.index_name}</td>
+                <th>Field Name</th>
+                <td>{idx.field}</td>
               </tr>
-              {idx.field !== idx.index_name && (
-                <tr>
-                  <th>Field Name</th>
-                  <td>{idx.field}</td>
-                </tr>
-              )}
-              <tr>
-                <th>Index Type</th>
-                <td>{idx.index_param?.index_type || '—'}</td>
+            )}
+            <tr>
+              <th>Index Type</th>
+              <td>{idx.index_param.index_type}</td>
+            </tr>
+            <tr>
+              <th>Metric Type</th>
+              <td>{idx.index_param.metric_type}</td>
+            </tr>
+            {Object.entries(idx.index_param.params || {}).map(([key, value]) => (
+              <tr key={key}>
+                <th>{key}</th>
+                <td>{value.toString()}</td>
               </tr>
-              <tr>
-                <th>Metric Type</th>
-                <td>{idx.index_param?.metric_type || '—'}</td>
-              </tr>
-              {idx.index_param?.params &&
-                Object.entries(idx.index_param.params).map(([key, value], j) => (
-                  <tr key={j}>
-                    <th>{key}</th>
-                    <td>{String(value)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </Table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
       ))}
-    </>
+    </div>
   );
 }
