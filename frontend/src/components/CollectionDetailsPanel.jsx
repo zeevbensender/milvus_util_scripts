@@ -147,7 +147,7 @@ function getCollectionIndex(indexInfo) {
               {idx.progress && (
               <tr key={key}>
                 <th>Indexing Progress</th>
-                <td colSpan={2}>{idx.progress.indexed_rows} of {idx.progress.total_rows} </td>
+                <td colSpan={2}>{idx.progress.indexed_rows.toLocaleString()} of {idx.progress.total_rows.toLocaleString()} </td>
               </tr>
               )}
             {Object.entries(idx.index_param.params || {}).map(([key, value]) => (
