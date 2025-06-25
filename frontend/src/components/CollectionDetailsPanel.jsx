@@ -70,7 +70,7 @@ function getCollectionData(details) {
               <td>{details.collection_id}</td>
               <td>{details.description || ''}</td>
               <td>{details.entity_count.toLocaleString()}</td>
-              <td>{['NotExist', 'NotLoad', 'Loading', 'Loaded'][details.load_state] || 'Unknown'}</td>
+              <td>{['NotExist', 'NotLoaded', 'Loading', 'Loaded'][details.load_state] || 'Unknown'}</td>
             </tr>
         </tbody>
       </Table>
