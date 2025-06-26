@@ -2,6 +2,7 @@
 import { useEffect, useState, useContext, useRef } from 'react';
 import { getCollections, postMilvusAction } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -14,6 +15,7 @@ export default function CollectionsPanel() {
   const pollingRef = useRef(null);
   const [sortKey, setSortKey] = useState(() => localStorage.getItem('sortKey') || 'name');
   const [sortAsc, setSortAsc] = useState(() => localStorage.getItem('sortAsc') !== 'false');
+
 
   const fetchCollections = async () => {
     try {
@@ -82,6 +84,53 @@ export default function CollectionsPanel() {
     setLoadingState({ name: null, action: null });
   };
 
+const renderLoadStateButton = (col, handleAction) => {
+  const stateMap = ['NotExist', 'NotLoaded', 'Loading', 'Loaded'];
+  const label = stateMap[col.loaded] || 'Unknown';
+
+  const isLoaded = col.loaded === 3;
+  const isLoading = col.loaded === 2;
+  const isNotLoaded = col.loaded === 1;
+
+  const variant = isLoaded
+    ? 'success'
+    : isLoading
+    ? 'warning'
+    : isNotLoaded
+    ? 'outline-secondary'
+    : 'secondary';
+
+  const tooltipText = isLoaded
+    ? 'Release'
+    : isNotLoaded
+    ? 'Load'
+    : null;
+
+  const action = isLoaded
+    ? () => handleAction('release', col.name)
+    : isNotLoaded
+    ? () => handleAction('load', col.name)
+    : null;
+
+  const btn = (
+    <button
+      className={`btn btn-sm btn-${variant}`}
+      onClick={action}
+      disabled={!action}
+    >
+      {label}
+    </button>
+  );
+
+  return tooltipText ? (
+    <OverlayTrigger placement="top" overlay={<Tooltip>{tooltipText}</Tooltip>}>
+      <span>{btn}</span>
+    </OverlayTrigger>
+  ) : (
+    btn
+  );
+};
+
   return (
     <div className="container">
       <h2 className="mb-4">Collections</h2>
@@ -129,19 +178,11 @@ export default function CollectionsPanel() {
                   </td>
                   <td>{col.description}</td>
                   <td>
-                    <span className={`badge ${col.loaded === 3 ? 'bg-success' : col.loaded === 2 ? 'bg-warning' : 'bg-secondary'}`}>
-                      {['NotExist', 'NotLoad', 'Loading', 'Loaded'][col.loaded] || col.loaded}
-                    </span>
+                    {renderLoadStateButton(col, handleAction)}
                   </td>
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
-                    <button className="btn btn-sm btn-outline-primary me-1" disabled={loadingState.name === col.name && loadingState.action === 'load'} onClick={() => handleAction('load', col.name)}>
-                      {loadingState.name === col.name && loadingState.action === 'load' ? <span className="spinner-border spinner-border-sm" /> : 'Load'}
-                    </button>
-                    <button className="btn btn-sm btn-outline-warning me-1" disabled={loadingState.name === col.name && loadingState.action === 'release'} onClick={() => handleAction('release', col.name)}>
-                      {loadingState.name === col.name && loadingState.action === 'release' ? <span className="spinner-border spinner-border-sm" /> : 'Release'}
-                    </button>
                     <button className="btn btn-sm btn-outline-danger" disabled={loadingState.name === col.name && loadingState.action === 'drop'} onClick={() => handleAction('drop', col.name)}>
                       {loadingState.name === col.name && loadingState.action === 'drop' ? <span className="spinner-border spinner-border-sm" /> : 'Drop'}
                     </button>
