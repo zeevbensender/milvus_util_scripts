@@ -98,14 +98,24 @@ export default function CollectionsPanel() {
 
       {!loading && !error && (
         <div className="table-responsive">
-          <table className="table table-bordered table-hover align-middle">
+          <table className="table table-hover align-middle collections-table">
             <thead className="table-light">
               <tr>
-                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>Name</th>
-                <th onClick={() => handleSort('description')} style={{ cursor: 'pointer' }}>Description</th>
-                <th onClick={() => handleSort('loaded')} style={{ cursor: 'pointer' }}>Load State</th>
-                <th onClick={() => handleSort('entity_count')} style={{ cursor: 'pointer' }}>Entity Count</th>
-                <th onClick={() => handleSort('index_type')} style={{ cursor: 'pointer' }}>Index Type</th>
+                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
+                    Name{sortKey === 'name' && (sortAsc ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('description')} style={{ cursor: 'pointer' }}>
+                    Description{sortKey === 'description' && (sortAsc ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('loaded')} style={{ cursor: 'pointer' }}>
+                    Load State{sortKey === 'loaded' && (sortAsc ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('entity_count')} style={{ cursor: 'pointer' }}>
+                    Entity Count{sortKey === 'entity_count' && (sortAsc ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('index_type')} style={{ cursor: 'pointer' }}>
+                    Index Type{sortKey === 'index_type' && (sortAsc ? '↑' : '↓')}
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>

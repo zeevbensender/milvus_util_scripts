@@ -41,3 +41,29 @@ body {
 main {
   overflow-y: auto;
 }
+
+/* === Collections Table Polish === */
+.collections-table {
+  font-size: 0.95rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.collections-table th,
+.collections-table td {
+  border-top: 1px solid #dee2e6;
+}
+
+.collections-table tbody tr:hover {
+  background-color: #f5faff;
+}
+
+.collections-table a {
+  text-decoration: none;
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.collections-table a:hover {
+  text-decoration: underline;
+}
