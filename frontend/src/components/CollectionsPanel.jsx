@@ -112,15 +112,22 @@ const renderLoadStateButton = (col, handleAction) => {
     ? () => handleAction('load', col.name)
     : null;
 
-  const btn = (
-    <button
-      className={`btn btn-sm btn-${variant}`}
-      onClick={action}
-      disabled={!action}
-    >
-      {label}
-    </button>
-  );
+
+
+  const isBusy =
+  loadingState.name === col.name &&
+  (loadingState.action === 'load' || loadingState.action === 'release');
+
+    const btn = (
+      <button
+        className={`btn btn-sm btn-${variant} d-inline-flex align-items-center`}
+        onClick={action}
+        disabled={!action || isBusy}
+      >
+        {isBusy && <span className="spinner-border spinner-border-sm me-2" role="status" />}
+        {label}
+      </button>
+    );
 
   return tooltipText ? (
     <OverlayTrigger placement="top" overlay={<Tooltip>{tooltipText}</Tooltip>}>
