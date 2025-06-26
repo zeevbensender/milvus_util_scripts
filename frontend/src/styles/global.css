@@ -37,3 +37,7 @@ body {
   padding: 1rem;
   position: relative;
 }
+
+main {
+  overflow-y: auto;
+}
