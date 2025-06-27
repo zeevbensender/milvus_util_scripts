@@ -183,7 +183,13 @@ const renderLoadStateButton = (col, handleAction) => {
                     {col.name}
                    </a>
                   </td>
-                  <td>{col.description}</td>
+                  <td>
+                    <OverlayTrigger placement="top" overlay={<Tooltip>{col.description}</Tooltip>}>
+                      <span className="truncated-cell" title={col.description}>
+                        {col.description}
+                      </span>
+                    </OverlayTrigger>
+                  </td>
                   <td>
                     {renderLoadStateButton(col, handleAction)}
                   </td>

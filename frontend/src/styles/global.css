@@ -67,3 +67,12 @@ main {
 .collections-table a:hover {
   text-decoration: underline;
 }
+
+.truncated-cell {
+  max-width: 250px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
