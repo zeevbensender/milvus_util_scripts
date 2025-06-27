@@ -46,25 +46,33 @@ export default function CollectionDetailsPanel() {
   if (!details) return <Alert variant="warning" className="m-3">No collection data available.</Alert>;
 
   return (
-    <div className="m-3">
-      <h4>Collection: {name}</h4>
-      <Tabs
-          activeKey={tabFromUrl}
-          onSelect={(k) => setSearchParams({ tab: k })}
-          id="collection-tabs"
-          className="mb-3"
-        >
-        <Tab eventKey="overview" title="Overview">
+<div className="px-3">
+  <div className="d-inline-block">
+    <Tabs
+      activeKey={tabFromUrl}
+      onSelect={(k) => setSearchParams({ tab: k })}
+      id="collection-tabs"
+      className="mb-3"
+    >
+      <Tab eventKey="overview" title="Overview">
+        <div className="p-3 border rounded bg-white shadow-sm">
           {getCollectionData(details)}
-        </Tab>
-        <Tab eventKey="schema" title="Schema">
+        </div>
+      </Tab>
+      <Tab eventKey="schema" title="Schema">
+        <div className="p-3 border rounded bg-white shadow-sm">
           {getCollectionSchema(details.schema)}
-        </Tab>
-        <Tab eventKey="indexes" title="Indexes">
+        </div>
+      </Tab>
+      <Tab eventKey="indexes" title="Indexes">
+        <div className="p-3 border rounded bg-white shadow-sm">
           {getCollectionIndex(details.index_info)}
-        </Tab>
-      </Tabs>
-    </div>
+        </div>
+      </Tab>
+    </Tabs>
+  </div>
+</div>
+
   );
 }
 
