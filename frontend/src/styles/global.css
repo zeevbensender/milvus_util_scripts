@@ -76,3 +76,17 @@ main {
   text-overflow: ellipsis;
   vertical-align: middle;
 }
+
+/* == Compact Table Variant == */
+.table-sm-custom td,
+.table-sm-custom th {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+
+.table-sm-custom td {
+  line-height: 1.4;
+  white-space: nowrap;
+}

@@ -3,6 +3,7 @@ import { useEffect, useState, useContext, useRef } from 'react';
 import { getCollections, postMilvusAction } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -154,7 +155,7 @@ const renderLoadStateButton = (col, handleAction) => {
 
       {!loading && !error && (
         <div className="table-responsive">
-          <table className="table table-hover align-middle collections-table">
+          <table className="table table-hover align-middle collections-table table-sm-custom">
             <thead className="table-light">
               <tr>
                 <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
@@ -196,9 +197,20 @@ const renderLoadStateButton = (col, handleAction) => {
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
-                    <button className="btn btn-sm btn-outline-danger" disabled={loadingState.name === col.name && loadingState.action === 'drop'} onClick={() => handleAction('drop', col.name)}>
-                      {loadingState.name === col.name && loadingState.action === 'drop' ? <span className="spinner-border spinner-border-sm" /> : 'Drop'}
-                    </button>
+                    <OverlayTrigger placement="top" overlay={<Tooltip>Drop Collection</Tooltip>}>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        disabled={loadingState.name === col.name && loadingState.action === 'drop'}
+                        onClick={() => handleAction('drop', col.name)}
+                      >
+                        {loadingState.name === col.name && loadingState.action === 'drop' ? (
+                          <span className="spinner-border spinner-border-sm" role="status" />
+                        ) : (
+                          <i className="bi bi-trash" />
+                        )}
+                      </button>
+                    </OverlayTrigger>
+
                   </td>
                 </tr>
               ))}
