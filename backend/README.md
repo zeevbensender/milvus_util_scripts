@@ -8,5 +8,12 @@ Get Collections
 
 Get Collection Details
 ```bash
-curl "http://localhost:8080/api/milvus/collections/falcon1M/details?host=172.28.50.116&port=19530"
+curl "http://localhost:8080/api/milvus/collections/<collection name>/details?host=<milvus ip>&port=19530"
 ```
+
+Drop Index
+```bash
+curl -X POST http://localhost:8080/api/milvus/index/drop?host=<milvus ip> \
+  -H "Content-Type: application/json" \
+  -d '{"collection_name": "<collection name>", "field_name": "embedding"}'
+  ```

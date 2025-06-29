@@ -3,7 +3,7 @@ import traceback
 from contextlib import contextmanager
 from typing import List, Dict
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Body
 from pydantic import BaseModel
 from pymilvus import connections, utility, MilvusClient, Collection
 from pymilvus.exceptions import MilvusException
@@ -303,3 +303,30 @@ def get_collection_details(
             shard_num=-1,
             auto_id=False
         )
+
+
+@router.post("/index/drop")
+def drop_index(
+    payload: Dict = Body(...),
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    collection_name = payload.get("collection_name")
+    field_name = payload.get("field_name")
+
+    if not collection_name or not field_name:
+        return {"status": "error", "message": "Missing 'collection_name' or 'field_name'"}
+
+    try:
+        with milvus_connection(alias, host, port):
+            if not utility.has_collection(collection_name):
+                return {"status": "error", "message": f"Collection '{collection_name}' not found"}
+            collection = Collection(collection_name)
+            collection.drop_index(index_name=field_name)
+
+        return {"status": "success", "message": f"Index on field '{field_name}' dropped."}
+    except Exception as e:
+        print(f"Failed to drop index for field '{field_name}' in collection '{collection_name}': {e}")
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
