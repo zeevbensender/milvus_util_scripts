@@ -3,26 +3,21 @@ import { useEffect, useState } from 'react';
 import { Alert, Spinner, Table, Tabs, Tab, Button } from 'react-bootstrap';
 import { getCollectionDetails, dropIndex } from '../api/backend';
 import { useMilvusConnection } from '../hooks/useMilvusConnection';
+import { ConnectionState } from '../context/ConnectionContext';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
-  const { host, port } = useMilvusConnection();
-  const [checkedConnection, setCheckedConnection] = useState(false);
+  const { host, port, status } = useMilvusConnection();
 
-  useEffect(() => {
-    if (host || port || (host === null && port === null)) {
-      setCheckedConnection(true);
-    }
-  }, [host, port]);
-
-  if (!checkedConnection) {
-    return <Spinner animation="border" className="m-3" />;
+  if (status === ConnectionState.CONNECTING || status === ConnectionState.IDLE) {
+     return <Spinner animation="border" className="m-3" />;
   }
 
-  if (!host || !port) {
-    return <Navigate to="/" replace />;
-  }
+
+   if (status === ConnectionState.DISCONNECTED || status === ConnectionState.FAILED) {
+     return <Navigate to="/" replace />;
+   }
 
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
