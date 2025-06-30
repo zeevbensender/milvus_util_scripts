@@ -8,6 +8,17 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
   const { host, port } = useMilvusConnection();
+  const [checkedConnection, setCheckedConnection] = useState(false);
+
+  useEffect(() => {
+    if (host || port || (host === null && port === null)) {
+      setCheckedConnection(true);
+    }
+  }, [host, port]);
+
+  if (!checkedConnection) {
+    return <Spinner animation="border" className="m-3" />;
+  }
 
   if (!host || !port) {
     return <Navigate to="/" replace />;
