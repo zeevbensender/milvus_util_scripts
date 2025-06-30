@@ -1,4 +1,4 @@
-import { useParams, useSearchParams  } from 'react-router-dom';
+import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Alert, Spinner, Table, Tabs, Tab, Button } from 'react-bootstrap';
 import { getCollectionDetails, dropIndex } from '../api/backend';
@@ -8,6 +8,11 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
   const { host, port } = useMilvusConnection();
+
+  if (!host || !port) {
+    return <Navigate to="/" replace />;
+  }
+
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
