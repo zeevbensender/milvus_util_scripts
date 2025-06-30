@@ -44,6 +44,7 @@ export default function CollectionDetailsPanel() {
 
   return (
     <div className="px-3">
+      <p className="text-muted mb-2 fw-semibold">Collection: {details.name}</p>
       <div className="d-inline-block">
         <Tabs
           activeKey={tabFromUrl}
