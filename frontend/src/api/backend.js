@@ -49,3 +49,13 @@ export async function getCollectionDetails(name, host, port) {
     return { status: 'error', collections: [] };
   }
 }
+
+export async function dropIndex(collectionName, fieldName, host, port) {
+  const res = await fetch(`${getBackendUrl()}/api/milvus/index/drop?host=${host}&port=${port}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collection_name: collectionName, field_name: fieldName }),
+  });
+  return res.json();
+}
+

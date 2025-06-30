@@ -242,14 +242,17 @@ def get_collection_details(
             coll = Collection(name=name)
             # print(f"==> --> COLLECTION NAME: {coll.name}")
             desc = client.describe_collection(name)
-            indexes = get_indexes(coll)
-            for ixn in indexes.values():
-                progress = utility.index_building_progress(collection_name=name, index_name=ixn['index_name'])
-                if not progress.get("pending_index_rows"):
-                    continue
-                field = ixn.get('field')
-                if field:
-                    indexes[field].update({'progress': progress})
+            try:
+                indexes = get_indexes(coll)
+                for ixn in indexes.values():
+                    progress = utility.index_building_progress(collection_name=name, index_name=ixn['index_name'])
+                    if not progress.get("pending_index_rows"):
+                        continue
+                    field = ixn.get('field')
+                    if field:
+                        indexes[field].update({'progress': progress})
+            except MilvusException as e:
+                print(f"[INFO] ====> Skipping progress for dropped index {ixn['index_name']}: {e}")
 
             schema_fields = get_fields_data(coll.schema.fields)
 

@@ -1,9 +1,9 @@
 import { useParams, useSearchParams  } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Alert, Spinner, Table, Tabs, Tab } from 'react-bootstrap';
-import { getCollectionDetails } from '../api/backend';
+import { Alert, Spinner, Table, Tabs, Tab, Button } from 'react-bootstrap';
+import { getCollectionDetails, dropIndex } from '../api/backend';
 import { useMilvusConnection } from '../hooks/useMilvusConnection';
-
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
@@ -12,32 +12,29 @@ export default function CollectionDetailsPanel() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-//   const tabFromUrl = searchParams.get('tab') || 'overview';
   const allowedTabs = ['overview', 'schema', 'indexes'];
   const tabFromUrl = allowedTabs.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
+  const [droppingField, setDroppingField] = useState(null);
 
+  const fetchData = async () => {
+    try {
+      const data = await getCollectionDetails(name, host, port);
+      setDetails(data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch collection details:', err);
+      setError('Failed to fetch collection details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let timer;
-
-    const fetchData = async () => {
-      try {
-        const data = await getCollectionDetails(name, host, port);
-        setDetails(data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch collection details:', err);
-        setError('Failed to fetch collection details');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (host && port) {
       fetchData();
       timer = setInterval(fetchData, 5000);
     }
-
     return () => clearInterval(timer);
   }, [name, host, port]);
 
@@ -46,33 +43,32 @@ export default function CollectionDetailsPanel() {
   if (!details) return <Alert variant="warning" className="m-3">No collection data available.</Alert>;
 
   return (
-<div className="px-3">
-  <div className="d-inline-block">
-    <Tabs
-      activeKey={tabFromUrl}
-      onSelect={(k) => setSearchParams({ tab: k })}
-      id="collection-tabs"
-      className="mb-3"
-    >
-      <Tab eventKey="overview" title="Overview">
-        <div className="p-3 border rounded bg-white shadow-sm">
-          {getCollectionData(details)}
-        </div>
-      </Tab>
-      <Tab eventKey="schema" title="Schema">
-        <div className="p-3 border rounded bg-white shadow-sm">
-          {getCollectionSchema(details.schema)}
-        </div>
-      </Tab>
-      <Tab eventKey="indexes" title="Indexes">
-        <div className="p-3 border rounded bg-white shadow-sm">
-          {getCollectionIndex(details.index_info)}
-        </div>
-      </Tab>
-    </Tabs>
-  </div>
-</div>
-
+    <div className="px-3">
+      <div className="d-inline-block">
+        <Tabs
+          activeKey={tabFromUrl}
+          onSelect={(k) => setSearchParams({ tab: k })}
+          id="collection-tabs"
+          className="mb-3"
+        >
+          <Tab eventKey="overview" title="Overview">
+            <div className="p-3 border rounded bg-white shadow-sm">
+              {getCollectionData(details)}
+            </div>
+          </Tab>
+          <Tab eventKey="schema" title="Schema">
+            <div className="p-3 border rounded bg-white shadow-sm">
+              {getCollectionSchema(details.schema)}
+            </div>
+          </Tab>
+          <Tab eventKey="indexes" title="Indexes">
+            <div className="p-3 border rounded bg-white shadow-sm">
+              {getCollectionIndex(details.index_info, name, host, port, droppingField, setDroppingField, fetchData)}
+            </div>
+          </Tab>
+        </Tabs>
+      </div>
+    </div>
   );
 }
 
@@ -139,7 +135,7 @@ function getCollectionSchema(schema) {
   );
 }
 
-function getCollectionIndex(indexInfo) {
+function getCollectionIndex(indexInfo, collectionName, host, port, droppingField, setDroppingField, fetchData) {
   if (!indexInfo?.length) return <Alert variant="info">No index information available.</Alert>;
 
   const sorted = [...indexInfo].sort((a, b) => (b.field || '').localeCompare(a.field || ''));
@@ -153,6 +149,7 @@ function getCollectionIndex(indexInfo) {
               <th>Field Name</th>
               <th>Index Type</th>
               <th>Metric Type</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -160,16 +157,42 @@ function getCollectionIndex(indexInfo) {
               <td>{idx.field}</td>
               <td>{idx.index_param.index_type}</td>
               <td>{idx.index_param.metric_type}</td>
+              <td>
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  disabled={droppingField === idx.field}
+                  onClick={async () => {
+                    const confirmed = window.confirm(`Are you sure you want to drop index on field '${idx.field}'?`);
+                    if (!confirmed) return;
+                    setDroppingField(idx.field);
+                    try {
+                      const res = await dropIndex(collectionName, idx.field, host, port);
+                      alert(res.message);
+                      await fetchData();
+                    } catch (err) {
+                      alert("Failed to drop index");
+                    } finally {
+                      setDroppingField(null);
+                    }
+                  }}
+                >
+                  {droppingField === idx.field ? (
+                    <span className="spinner-border spinner-border-sm" role="status" />
+                  ) : (
+                    <i className="bi bi-trash" />
+                  )}
+                </button>
+              </td>
             </tr>
             {idx.index_name !== idx.field && (
               <tr key="index_name">
                 <th>Index Name</th>
-                <td colSpan={2}>{idx.index_name}</td>
+                <td colSpan={3}>{idx.index_name}</td>
               </tr>
             )}
             {idx.progress && (
               <tr key="progress">
-                <td colSpan={3}>
+                <td colSpan={4}>
                   Progress: {(idx.progress.indexed_rows / idx.progress.total_rows * 100).toFixed(2)}%
                   (Pending Rows: {idx.progress.pending_index_rows.toLocaleString()})
                 </td>
@@ -177,11 +200,11 @@ function getCollectionIndex(indexInfo) {
             )}
             {idx.index_param.params && (
               <>
-                <tr><th colSpan={3}>Index Parameters</th></tr>
+                <tr><th colSpan={4}>Index Parameters</th></tr>
                 {Object.entries(idx.index_param.params).map(([key, value]) => (
                   <tr key={key}>
                     <th>{key}</th>
-                    <td colSpan={2}>{value.toString()}</td>
+                    <td colSpan={3}>{value.toString()}</td>
                   </tr>
                 ))}
               </>
