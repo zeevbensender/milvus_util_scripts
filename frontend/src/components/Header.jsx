@@ -1,5 +1,5 @@
 // src/components/Header.jsx
-import { useConnection } from '../context/ConnectionContext';
+import { useConnection, ConnectionState } from '../context/ConnectionContext';
 
 export default function Header() {
   const { connected, host, port, status } = useConnection();
@@ -7,13 +7,13 @@ export default function Header() {
   let badgeClass = "bg-secondary";
   let label = "Disconnected";
 
-  if (status === "connecting") {
+  if (status === ConnectionState.CONNECTING) {
     badgeClass = "bg-warning text-dark";
     label = "Connecting...";
-  } else if (status === "connected") {
+  } else if (status === ConnectionState.CONNECTED) {
     badgeClass = "bg-success";
     label = `Connected to ${host}:${port}`;
-  } else if (status === "error") {
+  } else if (status === ConnectionState.FAILED) {
     badgeClass = "bg-danger";
     label = "Connection error";
   }
