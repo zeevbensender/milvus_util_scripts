@@ -5,6 +5,7 @@ import { ConnectionContext } from '../context/ConnectionContext';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
+
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
   const isReady = host && port;
@@ -16,6 +17,8 @@ export default function CollectionsPanel() {
   const pollingRef = useRef(null);
   const [sortKey, setSortKey] = useState(() => localStorage.getItem('sortKey') || 'name');
   const [sortAsc, setSortAsc] = useState(() => localStorage.getItem('sortAsc') !== 'false');
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renameTarget, setRenameTarget] = useState(null);
 
 
   const fetchCollections = async () => {
@@ -197,6 +200,17 @@ const renderLoadStateButton = (col, handleAction) => {
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
+                    <OverlayTrigger placement="top" overlay={<Tooltip>Rename Collection</Tooltip>}>
+                      <button
+                        className="btn btn-sm btn-outline-secondary me-2"
+                        onClick={() => {
+                          setRenameTarget(col.name);     // You'll define this state
+                          setShowRenameModal(true);      // You'll define this state too
+                        }}
+                      >
+                        <i className="bi bi-pencil" />
+                      </button>
+                    </OverlayTrigger>
                     <OverlayTrigger placement="top" overlay={<Tooltip>Drop Collection</Tooltip>}>
                       <button
                         className="btn btn-sm btn-outline-danger"
