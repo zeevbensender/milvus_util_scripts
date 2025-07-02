@@ -159,6 +159,23 @@ def release_collection(
         return {"status": "error", "message": str(e)}
 
 
+@router.post("/collection/rename")
+def rename_collection(
+    name: str = Query(...),
+    new_name: str = Query(...),
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            client.rename_collection(old_name=name, new_name=new_name)
+        return {"status": "success", "message": f"Collection '{name}' renamed to '{new_name}'."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @router.delete("/collections/drop")
 def drop_collection(
     name: str = Query(...),
@@ -333,3 +350,4 @@ def drop_index(
         print(f"Failed to drop index for field '{field_name}' in collection '{collection_name}': {e}")
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
+
