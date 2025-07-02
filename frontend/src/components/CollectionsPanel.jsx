@@ -6,7 +6,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import RenameCollectionModal from './RenameCollectionModal';
 import { postMilvusRenameCollection } from '../api/backend';
-
+import ToastManager from './ToastManager';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -149,12 +149,6 @@ const renderLoadStateButton = (col, handleAction) => {
     <div className="container">
       <h2 className="mb-4">Collections</h2>
 
-      {toast && (
-        <div className={`alert alert-${toast.type} alert-dismissible fade show`} role="alert">
-          {toast.message}
-          <button type="button" className="btn-close" onClick={() => setToast(null)}></button>
-        </div>
-      )}
 
       {loading && <div className="text-muted">Loading collections...</div>}
       {error && <div className="text-danger">{error}</div>}
@@ -251,6 +245,7 @@ const renderLoadStateButton = (col, handleAction) => {
         if (res.status === 'success') fetchCollections();
       }}
     />
+    <ToastManager toast={toast} setToast={setToast} />
     </div>
 
   );
