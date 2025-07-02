@@ -216,7 +216,11 @@ function getCollectionIndex(indexInfo, collectionName, host, port, droppingField
                 {Object.entries(idx.index_param.params).map(([key, value]) => (
                   <tr key={key}>
                     <th>{key}</th>
-                    <td colSpan={3}>{value.toString()}</td>
+                    <td colSpan={3}>
+                      {typeof value === 'object'
+                        ? JSON.stringify(value)
+                        : value?.toString?.() ?? ''}
+                    </td>
                   </tr>
                 ))}
               </>
