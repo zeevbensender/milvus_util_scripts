@@ -5,6 +5,7 @@ import { getCollectionDetails, dropIndex } from '../api/backend';
 import { useMilvusConnection } from '../hooks/useMilvusConnection';
 import { ConnectionState } from '../context/ConnectionContext';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import ToastManager from './ToastManager';
 
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
@@ -26,6 +27,7 @@ export default function CollectionDetailsPanel() {
   const allowedTabs = ['overview', 'schema', 'indexes'];
   const tabFromUrl = allowedTabs.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
   const [droppingField, setDroppingField] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -80,6 +82,7 @@ export default function CollectionDetailsPanel() {
           </Tab>
         </Tabs>
       </div>
+      <ToastManager toast={toast} setToast={setToast} />
     </div>
   );
 }
@@ -179,7 +182,10 @@ function getCollectionIndex(indexInfo, collectionName, host, port, droppingField
                     setDroppingField(idx.field);
                     try {
                       const res = await dropIndex(collectionName, idx.field, host, port);
-                      alert(res.message);
+                      setToast({
+                          type: res.status === 'success' ? 'success' : 'error',
+                          message: res.message
+                        });
                       await fetchData();
                     } catch (err) {
                       alert("Failed to drop index");
