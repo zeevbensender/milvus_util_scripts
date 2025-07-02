@@ -1,6 +1,6 @@
 import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Alert, Spinner, Table, Tabs, Tab, Button } from 'react-bootstrap';
+import { Alert, Spinner, Table, Tabs, Tab, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { getCollectionDetails, dropIndex } from '../api/backend';
 import { useMilvusConnection } from '../hooks/useMilvusConnection';
 import { ConnectionState } from '../context/ConnectionContext';
@@ -77,12 +77,12 @@ export default function CollectionDetailsPanel() {
           </Tab>
           <Tab eventKey="indexes" title="Indexes">
             <div className="p-3 border rounded bg-white shadow-sm">
-              {getCollectionIndex(details.index_info, name, host, port, droppingField, setDroppingField, fetchData)}
+              {getCollectionIndex(details.index_info, name, host, port, droppingField, setDroppingField, fetchData, setToast)}
             </div>
           </Tab>
         </Tabs>
+        <ToastManager toast={toast} setToast={setToast} />
       </div>
-      <ToastManager toast={toast} setToast={setToast} />
     </div>
   );
 }
@@ -150,7 +150,7 @@ function getCollectionSchema(schema) {
   );
 }
 
-function getCollectionIndex(indexInfo, collectionName, host, port, droppingField, setDroppingField, fetchData) {
+function getCollectionIndex(indexInfo, collectionName, host, port, droppingField, setDroppingField, fetchData, setToast) {
   if (!indexInfo?.length) return <Alert variant="info">No index information available.</Alert>;
 
   const sorted = [...indexInfo].sort((a, b) => (b.field || '').localeCompare(a.field || ''));
@@ -173,6 +173,7 @@ function getCollectionIndex(indexInfo, collectionName, host, port, droppingField
               <td>{idx.index_param.index_type}</td>
               <td>{idx.index_param.metric_type}</td>
               <td>
+                <OverlayTrigger placement="top" overlay={<Tooltip>Drop Index</Tooltip>}>
                 <button
                   className="btn btn-sm btn-outline-danger"
                   disabled={droppingField === idx.field}
@@ -188,7 +189,8 @@ function getCollectionIndex(indexInfo, collectionName, host, port, droppingField
                         });
                       await fetchData();
                     } catch (err) {
-                      alert("Failed to drop index");
+                      alert("Failed to drop index " + err);
+                      console.log(err)
                     } finally {
                       setDroppingField(null);
                     }
@@ -200,6 +202,7 @@ function getCollectionIndex(indexInfo, collectionName, host, port, droppingField
                     <i className="bi bi-trash" />
                   )}
                 </button>
+                </OverlayTrigger>
               </td>
             </tr>
             {idx.index_name !== idx.field && (

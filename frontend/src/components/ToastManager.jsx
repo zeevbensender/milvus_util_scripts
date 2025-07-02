@@ -19,7 +19,7 @@ export default function ToastManager({ toast, setToast }) {
   };
 
   return (
-    <ToastContainer position="bottom-end" className="p-3">
+    <ToastContainer position="top-end" className="p-3">
       <Toast
         bg={bgMap[toast.type] || 'light'}
         onClose={() => setToast(null)}
