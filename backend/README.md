@@ -17,3 +17,10 @@ curl -X POST http://localhost:8080/api/milvus/index/drop?host=<milvus ip> \
   -H "Content-Type: application/json" \
   -d '{"collection_name": "<collection name>", "field_name": "embedding"}'
   ```
+
+Rename Collection
+```bash
+curl -X POST http://localhost:8080/api/milvus/collection/rename?host=<milvus ip> \
+  -H "Content-Type: application/json"   \
+  -d '{"old_name": "<old collection name>", "new_name": "<new collection name>"}'
+```
