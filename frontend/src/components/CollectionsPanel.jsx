@@ -4,6 +4,8 @@ import { getCollections, postMilvusAction } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import RenameCollectionModal from './RenameCollectionModal';
+import { postMilvusRenameCollection } from '../api/backend';
 
 
 export default function CollectionsPanel() {
@@ -143,6 +145,7 @@ const renderLoadStateButton = (col, handleAction) => {
 };
 
   return (
+    <div>
     <div className="container">
       <h2 className="mb-4">Collections</h2>
 
@@ -233,5 +236,22 @@ const renderLoadStateButton = (col, handleAction) => {
         </div>
       )}
     </div>
+    <RenameCollectionModal
+      show={showRenameModal}
+      onClose={() => setShowRenameModal(false)}
+      oldName={renameTarget}
+      onRename={async (newName) => {
+        const res = await postMilvusRenameCollection(renameTarget, newName, host, port);
+        setToast({
+          type: res.status === 'success' ? 'success' : 'error',
+          message: res.message
+        });
+        setShowRenameModal(false);
+        setRenameTarget(null);
+        if (res.status === 'success') fetchCollections();
+      }}
+    />
+    </div>
+
   );
 }
