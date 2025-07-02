@@ -59,3 +59,11 @@ export async function dropIndex(collectionName, fieldName, host, port) {
   return res.json();
 }
 
+export async function postMilvusRenameCollection(oldName, newName, host, port) {
+  const res = await fetch(`${getBackendUrl()}/api/milvus/collection/rename?host=${host}&port=${port}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ old_name: oldName, new_name: newName }),
+  });
+  return res.json();
+}
