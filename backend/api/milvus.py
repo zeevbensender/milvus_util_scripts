@@ -161,17 +161,22 @@ def release_collection(
 
 @router.post("/collection/rename")
 def rename_collection(
-    name: str = Query(...),
-    new_name: str = Query(...),
+    payload: Dict = Body(...),
     host: str = Query("localhost"),
     port: int = Query(19530),
     alias: str = Query("default")
 ):
+    old_name = payload.get("old_name")
+    new_name = payload.get("new_name")
+
+    if not old_name or not new_name:
+        return {"status": "error", "message": "Missing 'old_name' or 'new_name'"}
+
     try:
         client = build_milvus_client(host, port)
         with milvus_connection(alias, host, port):
-            client.rename_collection(old_name=name, new_name=new_name)
-        return {"status": "success", "message": f"Collection '{name}' renamed to '{new_name}'."}
+            client.rename_collection(old_name=old_name, new_name=new_name)
+        return {"status": "success", "message": f"Collection '{old_name}' renamed to '{new_name}'."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
