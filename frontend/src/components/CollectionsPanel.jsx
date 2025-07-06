@@ -62,33 +62,33 @@ export default function CollectionsPanel() {
     localStorage.setItem('sortAsc', newAsc);
   };
 
-  const handleAction = async (action, name) => {
-    setLoadingState({ name, action });
-    if (action === 'load') {
-      postMilvusAction(action, name, host, port)
-        .catch((err) => {
-          console.error(err);
-          setToast({ type: 'error', message: `Failed to trigger load for ${name}` });
-        })
-        .finally(() => setLoadingState({ name: null, action: null }));
-      return;
-    }
+    const handleAction = async (action, name) => {
+        setLoadingState({ name, action });
+        if (action === 'load') {
+          postMilvusAction(action, name, host, port)
+            .catch((err) => {
+              console.error(err);
+              setToast({ type: 'error', message: `Failed to trigger load for ${name}` });
+            })
+            .finally(() => setLoadingState({ name: null, action: null }));
+          return;
+        }
 
-    if (action === 'drop') {
-      const confirmed = window.confirm("Collection will be dropped and data lost forever. Proceed?");
-      if (!confirmed) {
+        if (action === 'drop') {
+          const confirmed = window.confirm("Collection will be dropped and data lost forever. Proceed?");
+          if (!confirmed) {
+            setLoadingState({ name: null, action: null });
+            return;
+          }
+        }
+
+        const res = await postMilvusAction(action, name, host, port);
+        setToast({
+          type: res.status === 'success' ? 'success' : 'error',
+          message: res.message
+        });
         setLoadingState({ name: null, action: null });
-        return;
-      }
-    }
-
-    const res = await postMilvusAction(action, name, host, port);
-    setToast({
-      type: res.status === 'success' ? 'success' : 'error',
-      message: res.message
-    });
-    setLoadingState({ name: null, action: null });
-  };
+    };
 
 const renderLoadStateButton = (col, handleAction) => {
   const stateMap = ['NotExist', 'NotLoaded', 'Loading', 'Loaded'];
@@ -197,6 +197,14 @@ const renderLoadStateButton = (col, handleAction) => {
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
                   <td>
+                    <OverlayTrigger placement="top" overlay={<Tooltip>Compact Collection</Tooltip>}>
+                      <button
+                        className="btn btn-sm btn-outline-secondary me-2"
+                        onClick={() => handleAction('compact', col.name)}
+                      >
+                        <i className="bi bi-box-seam-fill" />
+                      </button>
+                    </OverlayTrigger>
                     <OverlayTrigger placement="top" overlay={<Tooltip>Rename Collection</Tooltip>}>
                       <button
                         className="btn btn-sm btn-outline-secondary me-2"

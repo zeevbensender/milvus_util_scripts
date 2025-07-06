@@ -197,6 +197,23 @@ def drop_collection(
         return {"status": "error", "message": str(e)}
 
 
+@router.post("/collections/compact")
+def drop_collection(
+    name: str = Query(...),
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    print(f"Compact collection called: '{name}")
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            client.compact(name)
+        return {"status": "success", "message": f"Collection compaction started for '{name}'."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 class CollectionDetailsResponse(BaseModel):
     collection_id: int = 0
     status: str
