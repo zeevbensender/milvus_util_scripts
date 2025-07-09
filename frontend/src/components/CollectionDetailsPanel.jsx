@@ -6,6 +6,7 @@ import { useMilvusConnection } from '../hooks/useMilvusConnection';
 import { ConnectionState } from '../context/ConnectionContext';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import ToastManager from './ToastManager';
+import LoadingOverlay from './LoadingOverlay';
 
 export default function CollectionDetailsPanel() {
   const { name } = useParams();
@@ -51,7 +52,6 @@ export default function CollectionDetailsPanel() {
     return () => clearInterval(timer);
   }, [name, host, port]);
 
-  if (loading) return <Spinner animation="border" className="m-3" />;
   if (error) return <Alert variant="danger" className="m-3">{error}</Alert>;
   if (!details) return <Alert variant="warning" className="m-3">No collection data available.</Alert>;
 
@@ -82,6 +82,7 @@ export default function CollectionDetailsPanel() {
           </Tab>
         </Tabs>
         <ToastManager toast={toast} setToast={setToast} />
+        <LoadingOverlay show={loading} />
       </div>
     </div>
   );
