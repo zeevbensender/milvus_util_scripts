@@ -7,6 +7,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import RenameCollectionModal from './RenameCollectionModal';
 import { postMilvusRenameCollection } from '../api/backend';
 import ToastManager from './ToastManager';
+import LoadingOverlay from './LoadingOverlay';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -150,7 +151,7 @@ const renderLoadStateButton = (col, handleAction) => {
       <h2 className="mb-4">Collections</h2>
 
 
-      {loading && <div className="text-muted">Loading collections...</div>}
+
       {error && <div className="text-danger">{error}</div>}
 
       {!loading && !error && (
@@ -254,6 +255,7 @@ const renderLoadStateButton = (col, handleAction) => {
       }}
     />
     <ToastManager toast={toast} setToast={setToast} />
+    <LoadingOverlay show={loading} />
     </div>
 
   );

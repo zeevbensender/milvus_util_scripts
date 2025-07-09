@@ -24,3 +24,8 @@ curl -X POST http://localhost:8080/api/milvus/collection/rename?host=<milvus ip>
   -H "Content-Type: application/json"   \
   -d '{"old_name": "<old collection name>", "new_name": "<new collection name>"}'
 ```
+Is Any of the Collections Indexing
+
+```bash
+curl "http://localhost:8080/api/milvus/indexing?host=172.28.55.131&port=19530"
+```
