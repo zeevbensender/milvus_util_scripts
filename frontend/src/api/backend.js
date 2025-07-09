@@ -29,6 +29,18 @@ export async function getCollections(host = 'localhost', port = 19530) {
   }
 }
 
+export async function getIsIndexing(host = 'localhost', port = 19530) {
+  try {
+    const response = await fetch(`${getBackendUrl()}/api/milvus/indexing?host=${host}&port=${port}`);
+    if (!response.ok) throw new Error("Failed to verify indexing");
+    const json = await response.json();
+    return json;
+  } catch (err) {
+    console.error("Error fetching collections:", err);
+    return { status: 'error'};
+  }
+}
+
 export async function postMilvusAction(action, name, host, port) {
   const response = await fetch(`${getBackendUrl()}/api/milvus/collections/${action}?name=${name}&host=${host}&port=${port}`, {
     method: action === 'drop' ? 'DELETE' : 'POST',

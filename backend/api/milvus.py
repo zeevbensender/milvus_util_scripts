@@ -98,7 +98,6 @@ def list_collections(
     port: int = Query(19530),
     alias: str = Query("default")
 ):
-    # TODO: make sure that non-indexed collections are as well
     try:
         client = build_milvus_client(host, port)
         with milvus_connection(alias, host, port):
@@ -117,6 +116,40 @@ def list_collections(
     except Exception as e:
         traceback.print_exc()
         return CollectionResponse(status="error", collections=[])
+
+
+class IndexingResponse(BaseModel):
+    status: str = "success"
+    indexing: bool = False
+    message: str = ""
+
+
+@router.get("/indexing", response_model=IndexingResponse)
+def is_indexing(
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            names = client.list_collections()
+            collections = []
+
+            for name in names:
+                coll = Collection(name=name)
+                desc = client.describe_collection(name)
+                indexes = get_indexes(coll)
+                for ixn in indexes.values():
+                    progress = utility.index_building_progress(collection_name=name,
+                                                               index_name=ixn['index_name'])
+                    if progress.get("pending_index_rows"):
+                        return IndexingResponse(indexing=True)
+    except Exception as e:
+        print(f"Failed to check indexing: {e}")
+        traceback.print_exc()
+        return IndexingResponse(status="error", message=str(e))
+    return IndexingResponse(indexing=False)
 
 
 @router.post("/collections/load")
@@ -240,6 +273,7 @@ def map_data_type(datatype: int):
         11: "Double",
         20: "String",
         21: "Varchar",
+        25: "Text",
         22: "Array",
         23: "Json",
         100: "Binary Vector",
