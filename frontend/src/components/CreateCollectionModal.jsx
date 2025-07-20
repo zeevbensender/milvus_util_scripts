@@ -3,41 +3,77 @@ import { Modal, Button, Form, Row, Col, Spinner } from 'react-bootstrap';
 import { postMilvusCreateCollection } from '../api/backend';
 import { ConnectionContext } from '../context/ConnectionContext';
 
-const defaultField = () => ({
-  name: '',
-  type: 'int64',
-  is_primary: false,
-  auto_id: false,
-  dim: '',
-  max_length: '',
-  element_type: ''
-});
+const getDefaultFields = () => ([
+  {
+    name: 'id',
+    type: 'int64',
+    is_primary: true,
+    auto_id: false,
+    dim: '',
+    max_length: '',
+    element_type: ''
+  },
+  {
+    name: 'embedding',
+    type: 'float_vector',
+    is_primary: false,
+    auto_id: false,
+    dim: '768',
+    max_length: '',
+    element_type: ''
+  }
+]);
 
-const supportedTypes = [
+const allTypes = [
   'int64', 'float', 'double', 'bool', 'varchar',
   'float_vector', 'binary_vector', 'array', 'json'
 ];
 
+const pkAllowedTypes = ['int64', 'varchar'];
+
 export default function CreateCollectionModal({ show, onClose, onCreated, setToast }) {
   const { host, port } = useContext(ConnectionContext);
-
   const [collectionName, setCollectionName] = useState('');
   const [description, setDescription] = useState('');
-  const [fields, setFields] = useState([defaultField()]);
+  const [fields, setFields] = useState(getDefaultFields());
   const [submitting, setSubmitting] = useState(false);
 
   const updateField = (index, key, value) => {
     const updated = [...fields];
     updated[index][key] = value;
+
+    // Only allow PK + auto_id on first field
+    if (index !== 0 && (key === 'is_primary' || key === 'auto_id')) return;
+
     setFields(updated);
   };
 
-  const addField = () => setFields([...fields, defaultField()]);
-  const removeField = (index) => setFields(fields.filter((_, i) => i !== index));
+  const addField = () => {
+    setFields([...fields, {
+      name: '',
+      type: 'int64',
+      is_primary: false,
+      auto_id: false,
+      dim: '',
+      max_length: '',
+      element_type: ''
+    }]);
+  };
+
+  const removeField = (index) => {
+    if (index === 0) return; // prevent removing first field
+    setFields(fields.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!collectionName.trim()) {
       setToast({ type: 'error', message: 'Collection name is required' });
+      return;
+    }
+
+    const primaryCount = fields.filter(f => f.is_primary).length;
+    if (primaryCount !== 1) {
+      setToast({ type: 'error', message: 'Exactly one primary field is required.' });
       return;
     }
 
@@ -109,7 +145,7 @@ export default function CreateCollectionModal({ show, onClose, onCreated, setToa
                 onChange={(e) => updateField(i, 'type', e.target.value)}
                 disabled={submitting}
               >
-                {supportedTypes.map(t => (
+                {(i === 0 ? pkAllowedTypes : allTypes).map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </Form.Select>
@@ -141,23 +177,27 @@ export default function CreateCollectionModal({ show, onClose, onCreated, setToa
               )}
             </Col>
             <Col md={2}>
-              <Form.Check
-                type="checkbox"
-                label="Primary"
-                checked={f.is_primary}
-                onChange={(e) => updateField(i, 'is_primary', e.target.checked)}
-                disabled={submitting}
-              />
-              <Form.Check
-                type="checkbox"
-                label="Auto ID"
-                checked={f.auto_id}
-                onChange={(e) => updateField(i, 'auto_id', e.target.checked)}
-                disabled={submitting}
-              />
+              {i === 0 && (
+                <>
+                  <Form.Check
+                    type="checkbox"
+                    label="Primary"
+                    checked={f.is_primary}
+                    onChange={(e) => updateField(i, 'is_primary', e.target.checked)}
+                    disabled={submitting}
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    label="Auto ID"
+                    checked={f.auto_id}
+                    onChange={(e) => updateField(i, 'auto_id', e.target.checked)}
+                    disabled={submitting}
+                  />
+                </>
+              )}
             </Col>
             <Col md={1}>
-              {fields.length > 1 && (
+              {i > 1 && (
                 <Button
                   variant="outline-danger"
                   size="sm"
