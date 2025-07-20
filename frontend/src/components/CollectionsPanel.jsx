@@ -8,6 +8,7 @@ import RenameCollectionModal from './RenameCollectionModal';
 import { postMilvusRenameCollection } from '../api/backend';
 import ToastManager from './ToastManager';
 import LoadingOverlay from './LoadingOverlay';
+import CreateCollectionModal from './CreateCollectionModal'
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -22,7 +23,7 @@ export default function CollectionsPanel() {
   const [sortAsc, setSortAsc] = useState(() => localStorage.getItem('sortAsc') !== 'false');
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
-
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchCollections = async () => {
     try {
@@ -154,6 +155,14 @@ const renderLoadStateButton = (col, handleAction) => {
 
       {error && <div className="text-danger">{error}</div>}
 
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="mb-0">Collections</h5>
+        <button className="btn btn-primary" onClick={() => setShowCreateModal(true)} >
+            <i className="bi bi-plus me-2" />
+            Create Collection
+        </button>
+      </div>
+
       {!loading && !error && (
         <div className="table-responsive">
           <table className="table table-hover align-middle collections-table table-sm-custom">
@@ -254,6 +263,17 @@ const renderLoadStateButton = (col, handleAction) => {
         if (res.status === 'success') fetchCollections();
       }}
     />
+    {showCreateModal && (
+      <CreateCollectionModal
+        show={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => {
+          fetchCollections(); // refresh list
+          setShowCreateModal(false);
+        }}
+        setToast={setToast}
+      />
+    )}
     <ToastManager toast={toast} setToast={setToast} />
     <LoadingOverlay show={loading} />
     </div>

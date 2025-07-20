@@ -79,3 +79,13 @@ export async function postMilvusRenameCollection(oldName, newName, host, port) {
   });
   return res.json();
 }
+
+export async function postMilvusCreateCollection(payload, host, port) {
+  const url = `${getBackendUrl()}/api/milvus/collection/create?host=${host}&port=${port}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
