@@ -1,3 +1,4 @@
+// same imports as before
 import { useState, useContext } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner } from 'react-bootstrap';
 import { postMilvusCreateCollection } from '../api/backend';
@@ -33,18 +34,16 @@ const pkAllowedTypes = ['int64', 'varchar'];
 
 export default function CreateCollectionModal({ show, onClose, onCreated, setToast }) {
   const { host, port } = useContext(ConnectionContext);
+
   const [collectionName, setCollectionName] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState(getDefaultFields());
+  const [fieldErrors, setFieldErrors] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   const updateField = (index, key, value) => {
     const updated = [...fields];
     updated[index][key] = value;
-
-    // Only allow PK + auto_id on first field
-    if (index !== 0 && (key === 'is_primary' || key === 'auto_id')) return;
-
     setFields(updated);
   };
 
@@ -63,11 +62,26 @@ export default function CreateCollectionModal({ show, onClose, onCreated, setToa
   const removeField = (index) => {
     if (index === 0) return; // prevent removing first field
     setFields(fields.filter((_, i) => i !== index));
+    setFieldErrors(fieldErrors.filter((_, i) => i !== index));
+  };
+
+  const validateFields = () => {
+    const errors = fields.map((f) => ({
+      name: !f.name,
+      type: !f.type
+    }));
+    setFieldErrors(errors);
+    return errors.every(err => !err.name && !err.type);
   };
 
   const handleSubmit = async () => {
     if (!collectionName.trim()) {
       setToast({ type: 'error', message: 'Collection name is required' });
+      return;
+    }
+
+    if (!validateFields()) {
+      setToast({ type: 'error', message: 'Please fill in all required fields' });
       return;
     }
 
@@ -129,87 +143,102 @@ export default function CreateCollectionModal({ show, onClose, onCreated, setToa
         </Form.Group>
 
         <h6>Fields</h6>
-        {fields.map((f, i) => (
-          <Row className="mb-3" key={i}>
-            <Col md={3}>
-              <Form.Control
-                placeholder="Field Name"
-                value={f.name}
-                onChange={(e) => updateField(i, 'name', e.target.value)}
-                disabled={submitting}
-              />
-            </Col>
-            <Col md={2}>
-              <Form.Select
-                value={f.type}
-                onChange={(e) => updateField(i, 'type', e.target.value)}
-                disabled={submitting}
-              >
-                {(i === 0 ? pkAllowedTypes : allTypes).map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </Form.Select>
-            </Col>
-            <Col md={2}>
-              {f.type.includes('vector') && (
+        {fields.map((f, i) => {
+          const errors = fieldErrors[i] || {};
+          return (
+            <Row className="mb-3" key={i}>
+              <Col md={3}>
                 <Form.Control
-                  placeholder="dim"
-                  value={f.dim}
-                  onChange={(e) => updateField(i, 'dim', e.target.value)}
+                  placeholder="Field Name"
+                  value={f.name}
+                  isInvalid={errors.name}
+                  onChange={(e) => updateField(i, 'name', e.target.value)}
                   disabled={submitting}
                 />
-              )}
-              {f.type === 'varchar' && (
-                <Form.Control
-                  placeholder="max_length"
-                  value={f.max_length}
-                  onChange={(e) => updateField(i, 'max_length', e.target.value)}
-                  disabled={submitting}
-                />
-              )}
-              {f.type === 'array' && (
-                <Form.Control
-                  placeholder="element_type"
-                  value={f.element_type}
-                  onChange={(e) => updateField(i, 'element_type', e.target.value)}
-                  disabled={submitting}
-                />
-              )}
-            </Col>
-            <Col md={2}>
-              {i === 0 && (
-                <>
-                  <Form.Check
-                    type="checkbox"
-                    label="Primary"
-                    checked={f.is_primary}
-                    onChange={(e) => updateField(i, 'is_primary', e.target.checked)}
-                    disabled={submitting}
-                  />
-                  <Form.Check
-                    type="checkbox"
-                    label="Auto ID"
-                    checked={f.auto_id}
-                    onChange={(e) => updateField(i, 'auto_id', e.target.checked)}
-                    disabled={submitting}
-                  />
-                </>
-              )}
-            </Col>
-            <Col md={1}>
-              {i > 1 && (
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => removeField(i)}
+                {errors.name && (
+                  <Form.Control.Feedback type="invalid">
+                    Name is required
+                  </Form.Control.Feedback>
+                )}
+              </Col>
+              <Col md={2}>
+                <Form.Select
+                  value={f.type}
+                  isInvalid={errors.type}
+                  onChange={(e) => updateField(i, 'type', e.target.value)}
                   disabled={submitting}
                 >
-                  ✕
-                </Button>
-              )}
-            </Col>
-          </Row>
-        ))}
+                  {(i === 0 ? pkAllowedTypes : allTypes).map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </Form.Select>
+                {errors.type && (
+                  <Form.Control.Feedback type="invalid">
+                    Type is required
+                  </Form.Control.Feedback>
+                )}
+              </Col>
+              <Col md={2}>
+                {f.type.includes('vector') && (
+                  <Form.Control
+                    placeholder="dim"
+                    value={f.dim}
+                    onChange={(e) => updateField(i, 'dim', e.target.value)}
+                    disabled={submitting}
+                  />
+                )}
+                {f.type === 'varchar' && (
+                  <Form.Control
+                    placeholder="max_length"
+                    value={f.max_length}
+                    onChange={(e) => updateField(i, 'max_length', e.target.value)}
+                    disabled={submitting}
+                  />
+                )}
+                {f.type === 'array' && (
+                  <Form.Control
+                    placeholder="element_type"
+                    value={f.element_type}
+                    onChange={(e) => updateField(i, 'element_type', e.target.value)}
+                    disabled={submitting}
+                  />
+                )}
+              </Col>
+              <Col md={2}>
+                {i === 0 && (
+                  <>
+                    <Form.Check
+                      type="checkbox"
+                      label="Primary"
+                      checked={f.is_primary}
+                      onChange={(e) => updateField(i, 'is_primary', e.target.checked)}
+                      disabled={submitting}
+                    />
+                    <Form.Check
+                      type="checkbox"
+                      label="Auto ID"
+                      checked={f.auto_id}
+                      onChange={(e) => updateField(i, 'auto_id', e.target.checked)}
+                      disabled={submitting}
+                    />
+                  </>
+                )}
+              </Col>
+              <Col md={1}>
+                {i > 1 && (
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => removeField(i)}
+                    disabled={submitting}
+                  >
+                    ✕
+                  </Button>
+                )}
+              </Col>
+            </Row>
+          );
+        })}
 
         <Button variant="outline-secondary" onClick={addField} disabled={submitting}>
           ➕ Add Field
