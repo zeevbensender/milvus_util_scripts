@@ -3,7 +3,7 @@
 ## Testing the backend
 Get Collections
 ```bash
- curl "http://localhost:8080/api/milvus/collections?host=<milvus ip>&port=19530"
+curl "http://localhost:8080/api/milvus/collections?host=<milvus ip>&port=19530"
 ```
 
 Get Collection Details
@@ -28,4 +28,32 @@ Is Any of the Collections Indexing
 
 ```bash
 curl "http://localhost:8080/api/milvus/indexing?host=172.28.55.131&port=19530"
+```
+
+Create Collection
+```bash
+curl -X POST "http://localhost:8080/api/milvus/collection/create?host=172.28.55.131&port=19530" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "article_embeddings",
+    "description": "Embedding index for article search",
+    "fields": [
+      {
+        "name": "id",
+        "type": "int64",
+        "is_primary": true,
+        "auto_id": true
+      },
+      {
+        "name": "title",
+        "type": "varchar",
+        "max_length": 512
+      },
+      {
+        "name": "embedding",
+        "type": "float_vector",
+        "dim": 384
+      }
+    ]
+  }'
 ```

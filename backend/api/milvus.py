@@ -1,11 +1,11 @@
 import json
 import traceback
 from contextlib import contextmanager
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from fastapi import APIRouter, Query, Body
 from pydantic import BaseModel
-from pymilvus import connections, utility, MilvusClient, Collection
+from pymilvus import connections, utility, MilvusClient, Collection, DataType, FieldSchema, CollectionSchema
 from pymilvus.exceptions import MilvusException
 
 router = APIRouter(prefix="/api/milvus")
@@ -407,3 +407,67 @@ def drop_index(
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
 
+
+class FieldDefinition(BaseModel):
+    name: str
+    type: str
+    dim: Optional[int] = None
+    max_length: Optional[int] = None
+    is_primary: Optional[bool] = False
+    auto_id: Optional[bool] = False
+    element_type: Optional[str] = None
+
+
+class CreateCollectionRequest(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    fields: List[FieldDefinition]
+
+
+@router.post("/collection/create")
+def create_collection(request: CreateCollectionRequest, host: str = "localhost", port: str = "19530"):
+    try:
+        connections.connect(host=host, port=port)
+
+        fields = []
+        for f in request.fields:
+            type_map = {
+                "int64": DataType.INT64,
+                "float": DataType.FLOAT,
+                "double": DataType.DOUBLE,
+                "bool": DataType.BOOL,
+                "varchar": DataType.VARCHAR,
+                "float_vector": DataType.FLOAT_VECTOR,
+                "binary_vector": DataType.BINARY_VECTOR,
+                "array": DataType.ARRAY,
+                "json": DataType.JSON,
+            }
+
+            if f.type not in type_map:
+                return {"status": "error", "message": f"Unsupported field type: {f.type}"}
+
+            kwargs = {}
+            if f.dim is not None:
+                kwargs["dim"] = f.dim
+            if f.max_length is not None:
+                kwargs["max_length"] = f.max_length
+            if f.element_type is not None:
+                kwargs["element_type"] = getattr(DataType, f.element_type.upper(), None)
+                if kwargs["element_type"] is None:
+                    return {"status": "error", "message": f"Unsupported element_type: {f.element_type}"}
+
+            field = FieldSchema(
+                name=f.name,
+                dtype=type_map[f.type],
+                is_primary=f.is_primary,
+                auto_id=f.auto_id,
+                **kwargs
+            )
+            fields.append(field)
+
+        schema = CollectionSchema(fields=fields, description=request.description or "")
+        collection = Collection(name=request.name, schema=schema)
+        return {"status": "success", "message": f"Collection '{request.name}' created"}
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
