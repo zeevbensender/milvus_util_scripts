@@ -65,14 +65,36 @@ export default function CreateCollectionModal({ show, onClose, onCreated, setToa
     setFieldErrors(fieldErrors.filter((_, i) => i !== index));
   };
 
-  const validateFields = () => {
-    const errors = fields.map((f) => ({
-      name: !f.name,
-      type: !f.type
-    }));
-    setFieldErrors(errors);
-    return errors.every(err => !err.name && !err.type);
-  };
+    const validateFields = () => {
+      const errors = fields.map((f) => {
+        const err = {
+          name: !f.name,
+          type: !f.type,
+          dim: false,
+          max_length: false,
+          element_type: false
+        };
+
+        if ((f.type === 'float_vector' || f.type === 'binary_vector') && (!f.dim || isNaN(f.dim))) {
+          err.dim = true;
+        }
+
+        if (f.type === 'varchar' && (!f.max_length || isNaN(f.max_length))) {
+          err.max_length = true;
+        }
+
+        if (f.type === 'array' && !f.element_type) {
+          err.element_type = true;
+        }
+
+        return err;
+      });
+
+      setFieldErrors(errors);
+      return errors.every(err =>
+        !err.name && !err.type && !err.dim && !err.max_length && !err.element_type
+      );
+    };
 
   const handleSubmit = async () => {
     if (!collectionName.trim()) {
@@ -180,28 +202,56 @@ export default function CreateCollectionModal({ show, onClose, onCreated, setToa
               </Col>
               <Col md={2}>
                 {f.type.includes('vector') && (
-                  <Form.Control
-                    placeholder="dim"
-                    value={f.dim}
-                    onChange={(e) => updateField(i, 'dim', e.target.value)}
-                    disabled={submitting}
-                  />
+                    <div>
+                    <Form.Control
+                      placeholder="dim"
+                      value={f.dim}
+                      onChange={(e) => updateField(i, 'dim', e.target.value)}
+                      isInvalid={errors.dim}
+                      disabled={submitting}
+                    />
+                    {errors.dim && (
+                      <Form.Control.Feedback type="invalid">
+                        Dimension is invalid or missing
+                      </Form.Control.Feedback>
+                    )}
+                    </div>
                 )}
                 {f.type === 'varchar' && (
-                  <Form.Control
-                    placeholder="max_length"
-                    value={f.max_length}
-                    onChange={(e) => updateField(i, 'max_length', e.target.value)}
-                    disabled={submitting}
-                  />
+                    <div>
+
+                    <Form.Control
+                      placeholder="max_length"
+                      value={f.max_length}
+                      onChange={(e) => updateField(i, 'max_length', e.target.value)}
+                      isInvalid={errors.max_length}
+                      disabled={submitting}
+                    />
+                    {errors.max_length && (
+                      <Form.Control.Feedback type="invalid">
+                        Max length is invalid or missing
+                      </Form.Control.Feedback>
+                    )}
+                    </div>
+
                 )}
                 {f.type === 'array' && (
-                  <Form.Control
-                    placeholder="element_type"
-                    value={f.element_type}
-                    onChange={(e) => updateField(i, 'element_type', e.target.value)}
-                    disabled={submitting}
-                  />
+                    <div>
+
+                    <Form.Control
+                      placeholder="element_type"
+                      value={f.element_type}
+                      onChange={(e) => updateField(i, 'element_type', e.target.value)}
+                      isInvalid={errors.element_type}
+                      disabled={submitting}
+                    />
+                    {errors.element_type && (
+                      <Form.Control.Feedback type="invalid">
+                        Element type is invalid or missing
+                      </Form.Control.Feedback>
+                    )}
+                    </div>
+
                 )}
               </Col>
               <Col md={2}>

@@ -27,12 +27,12 @@ curl -X POST http://localhost:8080/api/milvus/collection/rename?host=<milvus ip>
 Is Any of the Collections Indexing
 
 ```bash
-curl "http://localhost:8080/api/milvus/indexing?host=172.28.55.131&port=19530"
+curl "http://localhost:8080/api/milvus/indexing?host=<milvus ip>&port=19530"
 ```
 
 Create Collection
 ```bash
-curl -X POST "http://localhost:8080/api/milvus/collection/create?host=172.28.55.131&port=19530" \
+curl -X POST "http://localhost:8080/api/milvus/collection/create?host=<milvus ip>&port=19530" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "article_embeddings",
