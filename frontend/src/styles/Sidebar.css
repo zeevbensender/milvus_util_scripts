@@ -1,0 +1,22 @@
+.sidebar .nav-link {
+  color: #333;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+  background-color: #f0f0f0;
+}
+
+.sidebar .nav-link.active {
+  background-color: #e9f5ff;
+  color: #0d6efd;
+  border-left: 3px solid #0d6efd;
+}
+.sidebar {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+}

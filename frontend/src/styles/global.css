@@ -37,3 +37,92 @@ body {
   padding: 1rem;
   position: relative;
 }
+
+main {
+  overflow-y: auto;
+}
+
+/* === Collections Table Polish === */
+.collections-table {
+  font-size: 0.95rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.collections-table th,
+.collections-table td {
+  border-top: 1px solid #dee2e6;
+}
+
+.collections-table tbody tr:hover {
+  background-color: #f5faff;
+}
+
+.collections-table a {
+  text-decoration: none;
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.collections-table a:hover {
+  text-decoration: underline;
+}
+
+.truncated-cell {
+  max-width: 250px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* == Compact Table Variant == */
+.table-sm-custom td,
+.table-sm-custom th {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+
+.table-sm-custom td {
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* === Hasura-style Tabs Refined === */
+.nav-tabs {
+  display: inline-flex !important;
+  flex-wrap: nowrap;
+  width: auto;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  background: none;
+  color: #6c757d;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.75rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #343a40;
+  border-bottom: 2px solid rgba(13, 110, 253, 0.25);
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  font-weight: 600;
+  border-bottom: 2px solid #0d6efd;
+}
+
+.table td, .table th {
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+}

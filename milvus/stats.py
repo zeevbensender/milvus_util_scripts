@@ -1,5 +1,5 @@
 import sys
-from pymilvus import MilvusClient, utility, Collection
+from pymilvus import MilvusClient, utility, connections, Collection
 import json
 
 
@@ -19,7 +19,24 @@ def stats(host_name, collection_name, port="19530", alias="default"):
     c_desc = client.describe_collection(collection_name=collection_name)
 
     print(f"==> Collection Description: {json.dumps(c_desc, indent=2, sort_keys=True)}; {rows}; LOADED: {loaded}")
-    
+
+    partitions = client.list_partitions(
+        collection_name=collection_name
+    )
+
+    print("==>")
+    print(f"==> Partitions Info: {partitions}")
+
+
+
+
+    connections.connect(alias='default', host=host_name, port=19530)
+    collection = Collection(collection_name)
+
+    s_info = utility.get_query_segment_info(collection_name=collection_name)
+
+    print("==>")
+    print(f"==> Segment Info: {s_info}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

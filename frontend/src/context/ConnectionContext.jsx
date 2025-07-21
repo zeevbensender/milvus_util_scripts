@@ -4,14 +4,21 @@ import { CONFIG } from '../utils/config';
 
 export const ConnectionContext = createContext();
 
+export const ConnectionState = {
+   IDLE: 0,
+   CONNECTING: 1,
+   CONNECTED: 2,
+   FAILED: 3,
+   DISCONNECTED: 4
+}
+
 export function ConnectionProvider({ children }) {
   const [connected, setConnected] = useState(false);
   const [host, setHost] = useState(null);
   const [port, setPort] = useState(null);
-  const [status, setStatus] = useState('idle'); // idle, connecting, connected, error
-
+  const [status, setStatus] = useState(ConnectionState.IDLE); // idle, connecting, connected, error
   const connectToMilvus = async (targetHost, targetPort) => {
-    setStatus('connecting');
+    setStatus(ConnectionState.CONNECTING);
     try {
       const res = await fetch(
         `http://${window.location.hostname}:${CONFIG.BACKEND_PORT}/api/milvus/ping?host=${targetHost}&port=${targetPort}`
@@ -21,18 +28,18 @@ export function ConnectionProvider({ children }) {
         setConnected(true);
         setHost(json.host);
         setPort(json.port);
-        setStatus('connected');
+        setStatus(ConnectionState.CONNECTED);
 
         // Save to localStorage
         localStorage.setItem('milvus_host', json.host);
         localStorage.setItem('milvus_port', json.port);
       } else {
         setConnected(false);
-        setStatus('error');
+        setStatus(ConnectionState.FAILED);
       }
     } catch (err) {
       setConnected(false);
-      setStatus('error');
+      setStatus(ConnectionState.FAILED);
     }
   };
 
@@ -42,6 +49,8 @@ export function ConnectionProvider({ children }) {
     const savedPort = localStorage.getItem('milvus_port');
     if (savedHost && savedPort) {
       connectToMilvus(savedHost, savedPort);
+    } else {
+        setStatus(ConnectionState.DISCONNECTED);
     }
   }, []);
 
@@ -54,12 +63,12 @@ export function ConnectionProvider({ children }) {
           .then(json => {
             if (!json.connected) {
               setConnected(false);
-              setStatus('error');
+              setStatus(ConnectionState.FAILED);
             }
           })
           .catch(() => {
             setConnected(false);
-            setStatus('error');
+            setStatus(ConnectionState.FAILED);
           });
       }, CONFIG.POLL_INTERVAL_MS);
 

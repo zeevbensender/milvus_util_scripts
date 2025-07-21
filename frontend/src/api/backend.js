@@ -29,6 +29,18 @@ export async function getCollections(host = 'localhost', port = 19530) {
   }
 }
 
+export async function getIsIndexing(host = 'localhost', port = 19530) {
+  try {
+    const response = await fetch(`${getBackendUrl()}/api/milvus/indexing?host=${host}&port=${port}`);
+    if (!response.ok) throw new Error("Failed to verify indexing");
+    const json = await response.json();
+    return json;
+  } catch (err) {
+    console.error("Error fetching collections:", err);
+    return { status: 'error'};
+  }
+}
+
 export async function postMilvusAction(action, name, host, port) {
   const response = await fetch(`${getBackendUrl()}/api/milvus/collections/${action}?name=${name}&host=${host}&port=${port}`, {
     method: action === 'drop' ? 'DELETE' : 'POST',
@@ -38,15 +50,42 @@ export async function postMilvusAction(action, name, host, port) {
 
 export async function getCollectionDetails(name, host, port) {
   const the_url = `${getBackendUrl()}/api/milvus/collections/${encodeURIComponent(name)}/details?host=${host}&port=${port}`
-  console.log("Inside get collection details: " + the_url)
+
   try {
     const response = await fetch(the_url);
     if (!response.ok) throw new Error("Failed to fetch the " + name + " collection details");
     const json = await response.json();
-    console.log(json)
     return json;
   } catch (err) {
     console.error("Error fetching collections:", err);
     return { status: 'error', collections: [] };
   }
+}
+
+export async function dropIndex(collectionName, fieldName, host, port) {
+  const res = await fetch(`${getBackendUrl()}/api/milvus/index/drop?host=${host}&port=${port}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collection_name: collectionName, field_name: fieldName }),
+  });
+  return res.json();
+}
+
+export async function postMilvusRenameCollection(oldName, newName, host, port) {
+  const res = await fetch(`${getBackendUrl()}/api/milvus/collection/rename?host=${host}&port=${port}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ old_name: oldName, new_name: newName }),
+  });
+  return res.json();
+}
+
+export async function postMilvusCreateCollection(payload, host, port) {
+  const url = `${getBackendUrl()}/api/milvus/collection/create?host=${host}&port=${port}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
 }

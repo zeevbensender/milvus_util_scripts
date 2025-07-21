@@ -1,7 +1,7 @@
 FROM node:20 AS builder
 WORKDIR /app
 COPY . .
-RUN npm ci && npm install react-bootstrap
+RUN npm ci && npm install react-bootstrap bootstrap-icons
 RUN npm install && npm run build
 
 FROM nginx:alpine
