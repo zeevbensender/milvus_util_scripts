@@ -9,7 +9,6 @@ import { postMilvusRenameCollection } from '../api/backend';
 import ToastManager from './ToastManager';
 import LoadingOverlay from './LoadingOverlay';
 import CreateCollectionModal from './CreateCollectionModal'
-import LoadingStateButton from './LoadingStateButton';
 import renderLoadStateButton from './CollectionLoadingStateButton';
 
 export default function CollectionsPanel() {
