@@ -197,4 +197,4 @@ vnvutil/
 frontend/node_modules/
 vnvmus/
 frontend/.vite/
-backend/vnvpanel/
+vnvpanel/

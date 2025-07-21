@@ -9,6 +9,8 @@ import { postMilvusRenameCollection } from '../api/backend';
 import ToastManager from './ToastManager';
 import LoadingOverlay from './LoadingOverlay';
 import CreateCollectionModal from './CreateCollectionModal'
+import LoadingStateButton from './LoadingStateButton';
+import renderLoadStateButton from './CollectionLoadingStateButton';
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -24,6 +26,7 @@ export default function CollectionsPanel() {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [hoverStates, setHoverStates] = useState({});
 
   const fetchCollections = async () => {
     try {
@@ -92,59 +95,6 @@ export default function CollectionsPanel() {
         setLoadingState({ name: null, action: null });
     };
 
-const renderLoadStateButton = (col, handleAction) => {
-  const stateMap = ['NotExist', 'NotLoaded', 'Loading', 'Loaded'];
-  const label = stateMap[col.loaded] || 'Unknown';
-
-  const isLoaded = col.loaded === 3;
-  const isLoading = col.loaded === 2;
-  const isNotLoaded = col.loaded === 1;
-
-  const variant = isLoaded
-    ? 'success'
-    : isLoading
-    ? 'warning'
-    : isNotLoaded
-    ? 'outline-secondary'
-    : 'secondary';
-
-  const tooltipText = isLoaded
-    ? 'Release'
-    : isNotLoaded
-    ? 'Load'
-    : null;
-
-  const action = isLoaded
-    ? () => handleAction('release', col.name)
-    : isNotLoaded
-    ? () => handleAction('load', col.name)
-    : null;
-
-
-
-  const isBusy =
-  loadingState.name === col.name &&
-  (loadingState.action === 'load' || loadingState.action === 'release');
-
-    const btn = (
-      <button
-        className={`btn btn-sm btn-${variant} d-inline-flex align-items-center`}
-        onClick={action}
-        disabled={!action || isBusy}
-      >
-        {isBusy && <span className="spinner-border spinner-border-sm me-2" role="status" />}
-        {label}
-      </button>
-    );
-
-  return tooltipText ? (
-    <OverlayTrigger placement="top" overlay={<Tooltip>{tooltipText}</Tooltip>}>
-      <span>{btn}</span>
-    </OverlayTrigger>
-  ) : (
-    btn
-  );
-};
 
   return (
     <div>
@@ -202,7 +152,13 @@ const renderLoadStateButton = (col, handleAction) => {
                     </OverlayTrigger>
                   </td>
                   <td>
-                    {renderLoadStateButton(col, handleAction)}
+                    {renderLoadStateButton(
+                      col, 
+                      handleAction, 
+                      loadingState, 
+                      hoverStates[col.name] || false, 
+                      (val) => setHoverStates((prev) => ({ ...prev, [col.name]: val }))
+                      )}
                   </td>
                   <td>{col.entity_count.toLocaleString()}</td>
                   <td>{col.index_type}</td>
@@ -239,7 +195,6 @@ const renderLoadStateButton = (col, handleAction) => {
                         )}
                       </button>
                     </OverlayTrigger>
-
                   </td>
                 </tr>
               ))}
