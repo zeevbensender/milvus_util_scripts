@@ -58,6 +58,8 @@ class CollectionInfo(BaseModel):
     loaded: int
     entity_count: int
     index_type: str
+    error: str
+    index_type_error: str
 
 class CollectionResponse(BaseModel):
     status: str
@@ -69,18 +71,34 @@ def build_milvus_client(host: str, port: int) -> MilvusClient:
 
 
 def fetch_collection_info(client: MilvusClient, name: str) -> CollectionInfo:
-    entity_count = client.get_collection_stats(collection_name=name).get('row_count', -1)
-    c_desc = client.describe_collection(collection_name=name)
-    loaded = int(client.get_load_state(collection_name=name)["state"])
-    print(f"===> Collection Loading State: {loaded}")
-    i_desc = client.describe_index(collection_name=name, index_name="embedding")
-    return CollectionInfo(
+    collection_info = CollectionInfo(
         name=name,
-        description=c_desc.get("description", ""),
-        loaded=loaded,
-        entity_count=entity_count,
-        index_type=i_desc.get("index_type", "N/A") if i_desc else "N/A"
+        description="",
+        loaded=-1,
+        entity_count=-1,
+        index_type="",
+        error="",
+        index_type_error=""
     )
+    try:
+        collection_info.entity_count = client.get_collection_stats(collection_name=name).get('row_count', -1)
+    except Exception as e:
+        collection_info.error = str(e)
+    try:
+        c_desc = client.describe_collection(collection_name=name)
+        collection_info.description = str(c_desc.get("description", "")),
+    except Exception as e:
+        collection_info.error = f"{collection_info.error}; {str(e)}"
+    try:
+        collection_info.loaded = int(client.get_load_state(collection_name=name)["state"])
+    except Exception as e:
+        collection_info.error = f"{collection_info.error}; {str(e)}"
+    try:
+        i_desc = client.describe_index(collection_name=name, index_name="embedding")
+        collection_info.index_type = i_desc.get("index_type", "N/A") if i_desc else "N/A"
+    except Exception as e:
+        collection_info.index_type_error = f"{collection_info.error}; {str(e)}"
+    return collection_info
 
 
 @contextmanager
@@ -287,7 +305,7 @@ def get_fields_data(fields):
         {
             "name": field.name,
             "type": map_data_type(field.dtype),
-            "description": field.description,
+            "description": str(field.description),
             "primary": field.is_primary,
             "auto_id": field.is_auto_id,
             "dimension": field.dim,
@@ -340,7 +358,7 @@ def get_collection_details(
                 status="success",
                 collection_id=desc["collection_id"],
                 name=name,
-                description=coll.description,
+                description=str(coll.description),
                 schema=schema_fields,
                 index_type=next(iter(indexes.values())).get("index_param", {}).get("index_type", "") if indexes else "",
                 entity_count=coll.num_entities,
@@ -465,7 +483,7 @@ def create_collection(request: CreateCollectionRequest, host: str = "localhost",
             )
             fields.append(field)
 
-        schema = CollectionSchema(fields=fields, description=request.description or "")
+        schema = CollectionSchema(fields=fields, description=str(request.description) or "")
         collection = Collection(name=request.name, schema=schema)
         return {"status": "success", "message": f"Collection '{request.name}' created"}
 
