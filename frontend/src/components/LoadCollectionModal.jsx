@@ -21,11 +21,11 @@ export default function LoadCollectionModal({ show, onClose, collectionName, onL
             name: field.name,
             type: field.type,
             isPrimary: field.primary === true,
+            isVector: field.type.toLowerCase().includes('vector'),
             indexType: field.index_type || '',
           }));
           setFields(parsed);
-          const required = parsed.filter(f => f.isPrimary).map(f => f.name);
-          setSelected(required); // initially select required only
+          setSelected(parsed.map(f => f.name)); // select all by default
         } else {
           setToast({ type: 'error', message: 'Failed to load schema' });
           setFields([]);
@@ -39,30 +39,37 @@ export default function LoadCollectionModal({ show, onClose, collectionName, onL
       .finally(() => setLoading(false));
   }, [show, collectionName, host, port]);
 
-  // Required (non-toggleable) fields
-  const requiredFields = useMemo(() => fields.filter(f => f.isPrimary).map(f => f.name), [fields]);
+  // Non-toggleable fields (always selected, cannot be unchecked)
+  const nonToggleableFields = useMemo(
+    () => fields.filter(f => f.isPrimary || f.isVector).map(f => f.name),
+    [fields]
+  );
 
-  const optionalFields = useMemo(() => fields.filter(f => !f.isPrimary), [fields]);
+  // Fields the user can toggle via checkboxes
+  const toggleableFields = useMemo(
+    () => fields.filter(f => !nonToggleableFields.includes(f.name)).map(f => f.name),
+    [fields, nonToggleableFields]
+  );
 
-  const allOptionalSelected = optionalFields.every(f => selected.includes(f.name));
-  const someOptionalSelected = optionalFields.some(f => selected.includes(f.name));
+  const allToggleableSelected = toggleableFields.every(f => selected.includes(f));
+  const someToggleableSelected = toggleableFields.some(f => selected.includes(f));
 
   useEffect(() => {
     if (masterRef.current) {
-      masterRef.current.indeterminate = someOptionalSelected && !allOptionalSelected;
+      masterRef.current.indeterminate = someToggleableSelected && !allToggleableSelected;
     }
-  }, [someOptionalSelected, allOptionalSelected]);
+  }, [someToggleableSelected, allToggleableSelected]);
 
   const toggleMaster = () => {
-    if (allOptionalSelected) {
-      setSelected(requiredFields); // keep only required
+    if (allToggleableSelected) {
+      setSelected(nonToggleableFields); // keep only locked fields
     } else {
-      setSelected([...requiredFields, ...optionalFields.map(f => f.name)]);
+      setSelected([...nonToggleableFields, ...toggleableFields]); // select all
     }
   };
 
   const toggleField = (name) => {
-    if (requiredFields.includes(name)) return;
+    if (nonToggleableFields.includes(name)) return;
     setSelected(prev =>
       prev.includes(name)
         ? prev.filter(f => f !== name)
@@ -71,14 +78,16 @@ export default function LoadCollectionModal({ show, onClose, collectionName, onL
   };
 
   const handleConfirm = () => {
-    const loadFields = [...selected]; // includes required + selected optional
-    postMilvusLoadCollection(collectionName, loadFields, host, port)
+    const allFieldNames = fields.map(f => f.name);
+    const sendAll = selected.length === allFieldNames.length;
+    
+    postMilvusLoadCollection(collectionName, sendAll ? [] : selected, host, port)
       .catch(err => {
         console.error(err);
         setToast({ type: 'error', message: err.message });
       });
     onClose();  // closes immediately
-    onLoaded(); // triggers parent refresh
+    onLoaded(); // parent refresh
   };
 
   return (
@@ -99,32 +108,36 @@ export default function LoadCollectionModal({ show, onClose, collectionName, onL
               id="master-checkbox"
               label="Select all fields"
               ref={masterRef}
-              checked={allOptionalSelected}
+              checked={allToggleableSelected}
               onChange={toggleMaster}
               className="mb-2"
             />
             <div className="field-list">
-              {fields.map(field => (
-                <Form.Check
-                  key={field.name}
-                  type="checkbox"
-                  id={`field-${field.name}`}
-                  label={
-                    <div>
-                      <strong>{field.name}</strong>
-                      <div className="text-muted small">
-                        {field.type}
-                        {field.indexType ? ` • Indexed: ${field.indexType}` : ''}
-                        {field.isPrimary ? ` • Primary` : ''}
+              {fields.map(field => {
+                const isDisabled = nonToggleableFields.includes(field.name);
+                const isChecked = selected.includes(field.name);
+                return (
+                  <Form.Check
+                    key={field.name}
+                    type="checkbox"
+                    id={`field-${field.name}`}
+                    label={
+                      <div>
+                        <strong>{field.name}</strong>
+                        <div className="text-muted small">
+                          {field.type}
+                          {field.indexType ? ` • Indexed: ${field.indexType}` : ''}
+                          {field.isPrimary ? ` • Primary` : ''}
+                        </div>
                       </div>
-                    </div>
-                  }
-                  checked={selected.includes(field.name)}
-                  disabled={field.isPrimary}
-                  onChange={() => toggleField(field.name)}
-                  className="mb-2"
-                />
-              ))}
+                    }
+                    checked={isChecked}
+                    disabled={isDisabled}
+                    onChange={() => toggleField(field.name)}
+                    className="mb-2"
+                  />
+                );
+              })}
             </div>
           </>
         )}
