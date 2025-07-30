@@ -1,5 +1,5 @@
 
-const renderLoadStateButton = (col, handleAction, loadingState, isHovering, setIsHovering) => {
+const renderLoadStateButton = (col, releaseAction, loadAction, loadingState, isHovering, setIsHovering, setLoadTarget, setShowLoadModal) => {
   const stateMap = ['NotExist', 'NotLoaded', 'Loading', 'Loaded'];
   const label = stateMap[col.loaded] || 'Unknown';
 
@@ -22,9 +22,12 @@ const renderLoadStateButton = (col, handleAction, loadingState, isHovering, setI
     : null;
 
   const action = isLoaded
-    ? () => handleAction('release', col.name)
+    ? () => releaseAction('release', col.name)
     : isNotLoaded
-    ? () => handleAction('load', col.name)
+    ? () => {
+           setLoadTarget(col.name);
+           setShowLoadModal(true);
+         }
     : null;
 
 

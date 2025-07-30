@@ -172,18 +172,22 @@ def is_indexing(
 
 @router.post("/collections/load")
 def load_collection(
-    name: str = Query(...),
+    payload: Dict = Body(...),
     host: str = Query("localhost"),
     port: int = Query(19530),
     alias: str = Query("default")
 ):
     try:
+        fields:list = payload.get("fields", None)
+        name = payload.get("name")
+        print(f"NAME: {name}; FIELDS: {fields}; HOST: {host}")
         print(f"About to load {name} collection")
         client = build_milvus_client(host, port)
         with milvus_connection(alias, host, port):
-            client.load_collection(name)
-            # collection = Collection(name, using=alias)
-            # collection.load()
+            if fields:
+                client.load_collection(name, load_fields=fields)
+            else:
+                client.load_collection(name)
         print(f"Collection {name} loaded")
         return {"status": "success", "message": f"Collection '{name}' is loaded."}
     except Exception as e:

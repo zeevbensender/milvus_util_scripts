@@ -5,11 +5,13 @@ import { ConnectionContext } from '../context/ConnectionContext';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import RenameCollectionModal from './RenameCollectionModal';
-import { postMilvusRenameCollection } from '../api/backend';
+import { postMilvusRenameCollection, postMilvusLoadCollection } from '../api/backend';
 import ToastManager from './ToastManager';
 import LoadingOverlay from './LoadingOverlay';
 import CreateCollectionModal from './CreateCollectionModal'
 import renderLoadStateButton from './CollectionLoadingStateButton';
+import LoadCollectionModal from './LoadCollectionModal';
+
 
 export default function CollectionsPanel() {
   const { host, port } = useContext(ConnectionContext);
@@ -26,6 +28,8 @@ export default function CollectionsPanel() {
   const [renameTarget, setRenameTarget] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [hoverStates, setHoverStates] = useState({});
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [loadTarget, setLoadTarget] = useState(null);
 
   const fetchCollections = async () => {
     try {
@@ -65,6 +69,11 @@ export default function CollectionsPanel() {
     localStorage.setItem('sortKey', key);
     localStorage.setItem('sortAsc', newAsc);
   };
+  
+  const handleLoadAction = async (name) => {
+    console.log("HANDLING LOAD ACTION")
+    postMilvusLoadCollection(name, [], host, port)
+  }
 
     const handleAction = async (action, name) => {
         setLoadingState({ name, action });
@@ -153,10 +162,13 @@ export default function CollectionsPanel() {
                   <td>
                     {renderLoadStateButton(
                       col, 
-                      handleAction, 
+                      handleAction,
+                      handleLoadAction, 
                       loadingState, 
                       hoverStates[col.name] || false, 
-                      (val) => setHoverStates((prev) => ({ ...prev, [col.name]: val }))
+                      (val) => setHoverStates((prev) => ({ ...prev, [col.name]: val })), 
+                      setLoadTarget, 
+                      setShowLoadModal
                       )}
                   </td>
                   <td>{col.entity_count.toLocaleString()}</td>
@@ -217,6 +229,20 @@ export default function CollectionsPanel() {
         if (res.status === 'success') fetchCollections();
       }}
     />
+    {showLoadModal && (
+      <LoadCollectionModal
+        show={showLoadModal}
+        onClose={() => setShowLoadModal(false)}
+        collectionName={loadTarget}
+        onLoaded={() => {
+          fetchCollections();            // refresh status
+          setShowLoadModal(false);       // close modal
+        }}
+        host={host}
+        port={port}
+        setToast={setToast}
+      />
+    )}
     {showCreateModal && (
       <CreateCollectionModal
         show={showCreateModal}

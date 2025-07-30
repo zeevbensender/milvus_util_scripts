@@ -48,6 +48,30 @@ export async function postMilvusAction(action, name, host, port) {
   return await response.json();
 }
 
+
+export async function postMilvusLoadCollection(name, fields, host, port) {
+  console.log("POSTING LOAD COLLECTION")
+  const payload = { name };
+  if (fields && Array.isArray(fields) && fields.length > 0) {
+    payload.fields = fields;
+  }
+
+  const res = await fetch(`${getBackendUrl()}/api/milvus/collections/load?host=${host}&port=${port}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Server error: ${res.status} ${text}`);
+  }
+
+  return await res.json();
+}
+
 export async function getCollectionDetails(name, host, port) {
   const the_url = `${getBackendUrl()}/api/milvus/collections/${encodeURIComponent(name)}/details?host=${host}&port=${port}`
 
