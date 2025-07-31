@@ -86,6 +86,20 @@ export async function getCollectionDetails(name, host, port) {
   }
 }
 
+export async function getSegmentInfo(name, host, port) {
+  const the_url = `${getBackendUrl()}/api/milvus/collections/${encodeURIComponent(name)}/segments?host=${host}&port=${port}`
+
+  try {
+    const response = await fetch(the_url);
+    if (!response.ok) throw new Error("Failed to fetch the " + name + " collection segments info");
+    const json = await response.json();
+    return json;
+  } catch (err) {
+    console.error("Error fetching collections:", err);
+    return { status: 'error', segments: [] };
+  }
+}
+
 export async function dropIndex(collectionName, fieldName, host, port) {
   const res = await fetch(`${getBackendUrl()}/api/milvus/index/drop?host=${host}&port=${port}`, {
     method: 'POST',

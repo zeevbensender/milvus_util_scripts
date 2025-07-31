@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import List, Dict, Optional
 
 from fastapi import APIRouter, Query, Body
+from google.protobuf.json_format import MessageToDict
 from pydantic import BaseModel
 from pymilvus import connections, utility, MilvusClient, Collection, DataType, FieldSchema, CollectionSchema
 from pymilvus.exceptions import MilvusException
@@ -50,6 +51,44 @@ def ping_milvus(
             port=port,
             error=str(e)
         )
+
+
+class SegmentInfo(BaseModel):
+    id: int
+    numRows: int
+    indexName: str
+    state: str
+
+
+
+class SegmentResponse(BaseModel):
+    load_state: int
+    status: str
+    segments:List[SegmentInfo]
+
+@router.get("/collections/{collection_name}/segments", response_model=SegmentResponse)
+def get_segments(
+    collection_name: str,
+    host: str = Query("localhost"),
+    port: int = Query(19530),
+    alias: str = Query("default")
+):
+    try:
+        client = build_milvus_client(host, port)
+        with milvus_connection(alias, host, port):
+            load_state = int(client.get_load_state(collection_name=collection_name)["state"])
+            if load_state != 3:
+                return SegmentResponse(load_state=load_state, status="not loaded", segments=[])
+            # collection = get_collection(host_name=host_name, collection_name=collection_name)
+            qs_info = utility.get_query_segment_info(collection_name=collection_name)
+            segment_info = [SegmentInfo(id=segm["segmentID"], numRows=segm["numRows"], indexName=segm["indexName"], state=segm["state"]) for segm in [MessageToDict(msg) for msg in qs_info]]
+            segment_info.sort(key=lambda seg: seg.id, reverse=True)
+            return SegmentResponse(load_state=load_state, status="success", segments=segment_info)
+    except Exception as e:
+        print(f"Error on get segments info: {e}")
+        traceback.print_exc()
+        return SegmentResponse(load_state=load_state, status=f"Error: {e}", segments=[])
+        # raise e
 
 
 class CollectionInfo(BaseModel):

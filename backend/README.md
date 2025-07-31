@@ -30,6 +30,19 @@ Is Any of the Collections Indexing
 curl "http://localhost:8080/api/milvus/indexing?host=<milvus ip>&port=19530"
 ```
 
+Load Collection
+```bash
+curl -X POST http://localhost:8080/api/milvus/collections/load?host=<milvus ip> \
+  -H "Content-Type: application/json"   \
+  -d '{"name": "<collection name>", "fields": ["embedding"]}'
+```
+
+Get Segments Info
+```bash
+curl "http://localhost:8080/api/milvus/collections/<collection name>/segments?host=<milvus ip>&port=19530"
+```
+
+
 Create Collection
 ```bash
 curl -X POST "http://localhost:8080/api/milvus/collection/create?host=<milvus ip>&port=19530" \

@@ -1,7 +1,7 @@
 import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Alert, Spinner, Table, Tabs, Tab, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { getCollectionDetails, dropIndex } from '../api/backend';
+import { getCollectionDetails, dropIndex , getSegmentInfo} from '../api/backend';
 import { useMilvusConnection } from '../hooks/useMilvusConnection';
 import { ConnectionState } from '../context/ConnectionContext';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -21,6 +21,7 @@ export default function CollectionDetailsPanel() {
      return <Navigate to="/" replace />;
    }
 
+  const [segments, setSegments] = useState([])
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,11 @@ export default function CollectionDetailsPanel() {
     try {
       const data = await getCollectionDetails(name, host, port);
       setDetails(data);
+      if(data.load_state === 3) {
+        const segmentsData = await getSegmentInfo(name, host, port);
+        setSegments(segmentsData.segments)
+        console.log("Num of segments: " + segmentsData.segments.length)
+      }
       setError(null);
     } catch (err) {
       console.error('Failed to fetch collection details:', err);
@@ -67,7 +73,7 @@ export default function CollectionDetailsPanel() {
         >
           <Tab eventKey="overview" title="Overview">
             <div className="p-3 border rounded bg-white shadow-sm">
-              {getCollectionData(details)}
+              {getCollectionData(details, segments)}
             </div>
           </Tab>
           <Tab eventKey="schema" title="Schema">
@@ -88,7 +94,40 @@ export default function CollectionDetailsPanel() {
   );
 }
 
-function getCollectionData(details) {
+function getSegmentsData(segments) {
+  if (segments.length === 0 ) {
+    return(<div></div>)
+  }
+  return (
+    <div className="mb-4">
+      <h6 className="mb-4">Number of Segments: {segments.length}</h6>
+      
+      <Table striped bordered hover responsive style={{ maxWidth: 'fit-content' }}>
+        <thead>
+          <tr>
+            <th>Segment ID</th>
+            <th>State</th>
+            <th>Index Name</th>
+            <th>Rows</th>
+          </tr>
+        </thead>
+        <tbody>
+        {segments.map((seg) => (
+                <tr key={seg.id}>
+                  <td>{seg.id}</td>
+                  <td>{seg.state}</td>
+                  <td>{seg.indexName}</td>
+                  <td>{seg.numRows}</td>
+                </tr>
+                ))}
+        </tbody>
+      </Table>
+      
+    </div>
+  )
+}
+
+function getCollectionData(details, segments) {
   return (
     <div className="mb-4">
       <Table striped bordered hover responsive style={{ maxWidth: 'fit-content' }}>
@@ -111,6 +150,7 @@ function getCollectionData(details) {
           </tr>
         </tbody>
       </Table>
+      { getSegmentsData(segments) }
     </div>
   );
 }
